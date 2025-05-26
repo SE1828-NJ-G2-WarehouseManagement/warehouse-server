@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-     "dev": "nodemon"
+    "dev": "nodemon"
   },
   "type": "module",
   "keywords": [],
@@ -21,7 +21,8 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.15.0",
     "morgan": "^1.10.0",
-    "nodemailer": "^7.0.3"
+    "nodemailer": "^7.0.3",
+    "zod": "^3.25.28"
   },
   "devDependencies": {
     "nodemon": "^3.1.10"

@@ -1,6 +1,7 @@
 const sayHello = (req, res) => {
     return res.json({
-        message: 'hello'
+        message: 'hello',
+        data: req.body
     })
 }
 
