@@ -1,13 +1,18 @@
 import express from "express";
-import { sayHello } from "./user.controller.js";
+import { login, register, sayHello } from "./user.controller.js";
 import { validateSchema } from "../main.middleware.js";
-import { createUser } from "./user.schema.js";
+import { registerUser, loginUser } from "./user.schema.js";
 
 const userRouter = express.Router();
 
 
-// @route   GET /api/users
-// @desc    Get message
-userRouter.post('/', validateSchema(createUser), sayHello);
+// @route   POST /api/v1/users
+// @desc    Register user
+userRouter.post('/register', validateSchema(registerUser), register);
+
+// @route   POST /api/v1/users
+// @desc    Login user
+userRouter.post('/login', validateSchema(loginUser), login);
+
 
 export default userRouter;
