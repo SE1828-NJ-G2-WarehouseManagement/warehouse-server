@@ -1,12 +1,7 @@
+import { publishEmail } from '../../config/kafka/producer.js';
 import JwtUtils from '../../utils/auth.utils.js';
+import { saveOtp } from '../../utils/otp.utils.js';
 import * as userService from './user.service.js';
-
-const sayHello = (req, res) => {
-    return res.json({
-        message: 'hello',
-        data: req.body
-    })
-}
 
 const login = async (req, res) => {
     try {
@@ -54,9 +49,27 @@ const register = async (req, res) => {
     }
 }
 
+const resetPassword = async (req, res) => {
+    try {
+        const {email} = req.body;
+        
+        await userService.resetPassword(
+            email
+        )
+        res.status(200).json({
+            message: 'Sent OTP to your email successfully'
+        })
+
+    } catch (error) {
+        res.status(500).json({
+            message: 'Sent OTP failed'
+        })
+    }
+}
+
 
 export {
-    sayHello,
     login,
-    register
+    register,
+    resetPassword
 }
