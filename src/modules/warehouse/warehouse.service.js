@@ -110,17 +110,32 @@ const changeWarehouseStatus = async (id, status) => {
   if (!warehouse) {
     throw new Error("Warehouse not found");
   }
-  if (status !== STATUS.INACTIVE) {
-    throw new Error("Only allowed to change status to INACTIVE");
+
+
+  if (![STATUS.ACTIVE, STATUS.INACTIVE].includes(status)) {
+    throw new Error("Status must be ACTIVE or INACTIVE");
   }
-  // check còn hàng trong kho không
-  if (warehouse.currentCapacity > 0) {
-    throw new Error("Cannot change status, warehouse has items");
+
+
+  if (status === STATUS.INACTIVE) {
+    // Chỉ cho phép chuyển sang INACTIVE nếu kho đang ACTIVE và không còn hàng
+    if (warehouse.status !== STATUS.ACTIVE) {
+      throw new Error("Warehouse is not ACTIVE");
+    }
+    if (warehouse.currentCapacity > 0) {
+      throw new Error("Cannot change status, warehouse has items");
+    }
   }
-  if (warehouse.status !== STATUS.ACTIVE) {
-    throw new Error("Warehouse is not ACTIVE");
+
+
+  if (status === STATUS.ACTIVE) {
+    // Chỉ cho phép chuyển sang ACTIVE nếu kho đang INACTIVE
+    if (warehouse.status !== STATUS.INACTIVE) {
+      throw new Error("Warehouse is not INACTIVE");
+    }
   }
-  warehouse.status = STATUS.INACTIVE;
+
+  warehouse.status = status;
   return await warehouse.save();
 };
 
