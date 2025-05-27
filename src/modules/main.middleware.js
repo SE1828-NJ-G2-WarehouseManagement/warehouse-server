@@ -1,3 +1,4 @@
+import { PREFIX } from "../constant/config.constant.js";
 import JwtUtils from "../utils/auth.utils.js";
 
 const validateSchema = (schema) => {
@@ -17,7 +18,7 @@ const validateSchema = (schema) => {
 
 const verifyToken = async (req, res, next) => {
   const authHeader = req.headers["authorization"];
-  const token = authHeader && authHeader.split(CONSTANT.SPLIT_PREFIX)[1];
+  const token = authHeader && authHeader.split(PREFIX.SPLIT_PREFIX)[1];
 
   //verify => token
   if (!token) {

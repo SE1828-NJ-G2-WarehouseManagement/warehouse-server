@@ -3,7 +3,12 @@ const LIMITER_CONFIG = {
     MAX_REQUEST: 10
 };
 
+const PREFIX = {
+    SPLIT_PREFIX: " "
+}
+
 
 export {
-    LIMITER_CONFIG
+    LIMITER_CONFIG,
+    PREFIX
 }
