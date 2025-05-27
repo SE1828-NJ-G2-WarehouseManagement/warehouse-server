@@ -2,6 +2,8 @@ import Warehouse from "./warehouse.model.js";
 import PAGE_SIZE from "../../constant/pageSize.constant.js";
 import { STATUS } from "../../constant/status.constant.js";
 import mongoose from "mongoose";
+import { ROLES } from "../../constant/role.constant.js";
+import User from "../user/user.model.js";
 const createWarehouse = async (data) => {
   // check existing warehouse
   const exist = await Warehouse.findOne({ name: data.name });
@@ -31,7 +33,7 @@ const getWarehouses = async (page) => {
   };
 };
 
-const getWarehouseById = async (id) => {
+const getWarehouseById = async (id, user) => {
   if (!mongoose.Types.ObjectId.isValid(id)) {
     throw new Error("Invalid warehouse ID");
   }
@@ -41,11 +43,34 @@ const getWarehouseById = async (id) => {
   if (!warehouse) {
     throw new Error("Warehouse not found");
   }
+
+  // Nếu không phải admin, lấy user từ DB để kiểm tra assignedWarehouse
+  if (user.role !== ROLES.ADMIN_WAREHOUSE) {
+    const dbUser = await User.findOne({ email: user.email }); 
+    if (
+      !dbUser.assignedWarehouse ||
+      dbUser.assignedWarehouse.toString() !== warehouse._id.toString()
+    ) {
+      throw new Error("You do not have permission to access this warehouse");
+    }
+  }
+
   return warehouse;
 };
 
-const getAllWarehouseCapacity = async () => {
-  const warehouses = await Warehouse.find();
+const getAllWarehouseCapacity = async (user) => {
+  let filter = {};
+
+  if (user.role !== ROLES.ADMIN_WAREHOUSE) {
+    // Lấy user từ DB để đảm bảo có assignedWarehouse
+    const dbUser = await User.findOne({ email: user.email });
+    if (!dbUser || !dbUser.assignedWarehouse) {
+      return []; // Không có warehouse nào được assign
+    }
+    filter = { _id: dbUser.assignedWarehouse };
+  }
+
+  const warehouses = await Warehouse.find(filter);
   return warehouses.map((w) => ({
     id: w._id,
     name: w.name,
@@ -60,9 +85,12 @@ const updateWarehouse = async (id, data) => {
   if (!mongoose.Types.ObjectId.isValid(id)) {
     throw new Error("Invalid warehouse ID");
   }
-  // check name 
-  if(data.name){
-    const exsit = await Warehouse.findOne({name: data.name, _id: {$ne: id}});
+  // check name
+  if (data.name) {
+    const exsit = await Warehouse.findOne({
+      name: data.name,
+      _id: { $ne: id },
+    });
     if (exsit) {
       throw new Error("Warehouse name already exists");
     }
@@ -75,12 +103,15 @@ const updateWarehouse = async (id, data) => {
 };
 
 const changeWarehouseStatus = async (id, status) => {
-  if(!mongoose.Types.ObjectId.isValid(id)){
+  if (!mongoose.Types.ObjectId.isValid(id)) {
     throw new Error("Invalid warehouse ID");
   }
   const warehouse = await Warehouse.findById(id);
   if (!warehouse) {
     throw new Error("Warehouse not found");
+  }
+  if (status !== STATUS.INACTIVE) {
+    throw new Error("Only allowed to change status to INACTIVE");
   }
   // check còn hàng trong kho không
   if (warehouse.currentCapacity > 0) {
@@ -91,7 +122,7 @@ const changeWarehouseStatus = async (id, status) => {
   }
   warehouse.status = STATUS.INACTIVE;
   return await warehouse.save();
-}
+};
 
 export default {
   createWarehouse,
