@@ -12,9 +12,12 @@ const registerUser = z.object({
 });
 
 const loginUser = z.object({
-    email: z.string().email(),
-    password: z.string().min(8),
-  });
-  
+  email: z.string().email(),
+  password: z.string().min(8),
+});
 
-export { registerUser, loginUser };
+const resetPasswordUser = z.object({
+  email: z.string().email(),
+});
+
+export { registerUser, loginUser, resetPasswordUser };

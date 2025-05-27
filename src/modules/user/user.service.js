@@ -1,4 +1,6 @@
+import { publishEmail } from "../../config/kafka/producer.js";
 import JwtUtils from "../../utils/auth.utils.js";
+import { generateOtp, saveOtp } from "../../utils/otp.utils.js";
 import User from "./user.model.js";
 
 const login = async (email, password) => {
@@ -51,7 +53,26 @@ const register = async (email, password, role) => {
     }
 }
 
+const resetPassword = async (email) => {
+    try {
+        const otp = generateOtp();
+
+        //save to redis
+        await saveOtp(email, otp);
+
+        await publishEmail({
+            to: email,
+            subject: 'Reset password',
+            otp
+        });
+    } catch (error) {
+        console.log(error);
+        throw new Error('Reset password failed')
+    }
+}
+
 export {
     login,
-    register
+    register,
+    resetPassword
 }
