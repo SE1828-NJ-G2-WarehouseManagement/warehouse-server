@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
-import { ROLES } from '../../constant/role.constant';
-import { STATUS } from '../../constant/status.constant';
+import { ROLES } from '../../constant/role.constant.js';
+import { STATUS } from '../../constant/status.constant.js';
 
 const userSchema = new mongoose.Schema({
   username: {
