@@ -14,7 +14,7 @@ export const getWarehouses = async (req, res) => {
 export const getWarehouseById = async (req, res) => {
   try {
     const id = req.params.id;
-    const warehouse = await warehouseService.getWarehouseById(id);
+    const warehouse = await warehouseService.getWarehouseById(id, req.user);
     res.status(200).json(warehouse);
   } catch (error) {
     if (error.message === "Invalid warehouse ID") {
@@ -29,7 +29,7 @@ export const getWarehouseById = async (req, res) => {
 
 export const getAllWarehouseCapacity = async (req, res) => {
   try {
-    const capacities = await warehouseService.getAllWarehouseCapacity();
+    const capacities = await warehouseService.getAllWarehouseCapacity(req.user);
     res.status(200).json(capacities);
   } catch (error) {
     res.status(500).json({ message: error.message });
