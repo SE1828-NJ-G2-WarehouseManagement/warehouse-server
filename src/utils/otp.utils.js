@@ -9,6 +9,17 @@ const saveOtp = async (email, otp) => {
   });
 };
 
+const getOtpStored = async (email) => {
+  const key = `otp:${email}`;
+  const otpStored = await redis.get(key);
+  return otpStored;
+}
+
+const deleteOtpStored = async (email) => {
+  const key = `otp:${email}`;
+  await redis.del(key);
+}
+
 const generateOtp = (length = 4) => {
     const digits = '0123456789';
     let otp = '';
@@ -20,5 +31,7 @@ const generateOtp = (length = 4) => {
 
 export {
     saveOtp,
-    generateOtp
+    generateOtp,
+    getOtpStored,
+    deleteOtpStored
 }
