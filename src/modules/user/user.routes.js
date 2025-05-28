@@ -1,7 +1,7 @@
 import express from "express";
-import { login, register, resetPassword } from "./user.controller.js";
+import { login, register, resetPassword, verifyOtp } from "./user.controller.js";
 import { validateSchema } from "../main.middleware.js";
-import { registerUser, loginUser, resetPasswordUser } from "./user.schema.js";
+import { registerUser, loginUser, resetPasswordUser, verifyOtpUser } from "./user.schema.js";
 import * as authenticationMiddleware from "../main.middleware.js";
 import { ROLES } from "../../constant/role.constant.js";
 
@@ -21,6 +21,14 @@ userRouter.post(
   "/reset-password",
   validateSchema(resetPasswordUser),
   resetPassword
+);
+
+// @route   POST /api/v1/users/verify-otp
+// @desc    verify otp
+userRouter.post(
+  "/verify-otp",
+  validateSchema(verifyOtpUser),
+  verifyOtp
 );
 
 export default userRouter;

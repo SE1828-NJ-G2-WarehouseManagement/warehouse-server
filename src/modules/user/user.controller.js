@@ -1,6 +1,4 @@
-import { publishEmail } from '../../config/kafka/producer.js';
 import JwtUtils from '../../utils/auth.utils.js';
-import { saveOtp } from '../../utils/otp.utils.js';
 import * as userService from './user.service.js';
 
 const login = async (req, res) => {
@@ -67,9 +65,27 @@ const resetPassword = async (req, res) => {
     }
 }
 
+const verifyOtp = async (req, res) => {
+    try {
+        const {otp, email} = req.body;
+        await userService.verifyOtp(otp, email);
+
+        return res.json({
+            message: 'Verified successfully',
+            isSuccess: true
+        })
+    } catch (error) {
+        return res.json({
+            message: 'Verified failed',
+            isSuccess: false
+        })
+    }
+}
+
 
 export {
     login,
     register,
-    resetPassword
+    resetPassword,
+    verifyOtp
 }
