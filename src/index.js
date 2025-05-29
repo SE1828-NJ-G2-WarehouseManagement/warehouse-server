@@ -16,7 +16,7 @@ app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 //limiter
-app.use(limiter);
+// app.use(limiter);
 
 //router config
 app.use('/api/v1', mainRouter);
