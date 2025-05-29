@@ -82,10 +82,28 @@ const verifyOtp = async (req, res) => {
     }
 }
 
+const changePassword = async (req, res) => {
+    try {
+        const {newPassword, email} = req.body;
+
+        await userService.changePassword(newPassword, email);
+
+        return res.status(200).json({
+            message: 'change password successfully',
+            isSuccess: true
+        })
+    } catch (error) {
+        return res.status(400).json({
+            message: 'change password failed',
+            isSuccess: false
+        })
+    }
+}
 
 export {
     login,
     register,
     resetPassword,
-    verifyOtp
+    verifyOtp,
+    changePassword
 }

@@ -16,12 +16,15 @@ const userSchema = new mongoose.Schema({
   },
   firstName: {
     type: String,
+    default: null
   },
   lastName: {
     type: String,
+    default: null
   },
   phone: {
     type: String,
+    default: null
   },
   role: {
     type: String,
@@ -33,7 +36,8 @@ const userSchema = new mongoose.Schema({
     default: STATUS.ACTIVE
   },
   avatar: {
-    type: String
+    type: String,
+    default: null
   },
   assignedWarehouse: {
     type: mongoose.Schema.Types.ObjectId,

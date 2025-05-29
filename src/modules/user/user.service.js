@@ -1,6 +1,15 @@
+import { email } from "zod/v4";
 import { publishEmail } from "../../config/kafka/producer.js";
 import JwtUtils from "../../utils/auth.utils.js";
-import { deleteOtpStored, generateOtp, getOtpStored, saveOtp } from "../../utils/otp.utils.js";
+import {
+  deleteOtpStored,
+  deleteOtpVerified,
+  generateOtp,
+  getOtpStored,
+  getOtpVerified,
+  saveOtp,
+  saveOtpVerified,
+} from "../../utils/otp.utils.js";
 import User from "./user.model.js";
 
 const login = async (email, password) => {
@@ -74,14 +83,42 @@ const verifyOtp = async (otp, email) => {
     const otpStored = await getOtpStored(email);
 
     console.log(otp, otpStored);
-    
+
     if (otp !== otpStored) {
-        throw new Error('Invalid otp verify');
-    }   
-    deleteOtpStored(email);
+      throw new Error("Invalid otp verify");
+    }
+    
+    await saveOtpVerified(email);
+    await deleteOtpStored(email);
   } catch (error) {
     throw error;
   }
 };
 
-export { login, register, resetPassword, verifyOtp };
+const changePassword = async (password, email) => {
+  try {
+    const userFound = await User.findOne({ email });
+
+    if (!userFound) {
+      throw new Error("Change password failed, user not found");
+    }
+
+    const isUserVerified = await getOtpVerified(email);
+
+    if (!isUserVerified) {
+      throw new Error("You need to verify first to change password");
+    }
+
+    const hashedPassword = await JwtUtils.hashPassword(password);
+    userFound.password = hashedPassword;
+
+    await userFound.save();
+
+    //delete otp verified in redis cache
+    await deleteOtpVerified(email);
+  } catch (error) {
+    throw error;
+  }
+};
+
+export { login, register, resetPassword, verifyOtp, changePassword };

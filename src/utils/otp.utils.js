@@ -9,14 +9,35 @@ const saveOtp = async (email, otp) => {
   });
 };
 
+const saveOtpVerified = async (email) => {
+  const key = `otp_verified:${email}`;
+  const ttlSeconds = 300; // 5 phút
+
+  await redis.set(key, "TRUE", {
+    EX: ttlSeconds, // Set TTL
+  });
+};
+
 const getOtpStored = async (email) => {
   const key = `otp:${email}`;
   const otpStored = await redis.get(key);
   return otpStored;
 }
 
+const getOtpVerified = async (email) => {
+  const key = `otp_verified:${email}`;
+  const otpVerified = await redis.get(key);
+  return otpVerified === "TRUE";
+}
+
+
 const deleteOtpStored = async (email) => {
   const key = `otp:${email}`;
+  await redis.del(key);
+}
+
+const deleteOtpVerified = async (email) => {
+  const key = `otp_verified:${email}`;
   await redis.del(key);
 }
 
@@ -31,7 +52,10 @@ const generateOtp = (length = 4) => {
 
 export {
     saveOtp,
+    saveOtpVerified,
     generateOtp,
     getOtpStored,
-    deleteOtpStored
+    getOtpVerified,
+    deleteOtpStored,
+    deleteOtpVerified
 }

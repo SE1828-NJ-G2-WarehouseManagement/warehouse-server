@@ -23,7 +23,18 @@ const resetPasswordUser = z.object({
 
 const verifyOtpUser = z.object({
   otp: z.string().nonempty(),
-  email: z.string().email()
+  email: z.string().email(),
 });
 
-export { registerUser, loginUser, resetPasswordUser, verifyOtpUser };
+const changePasswordUser = z.object({
+  newPassword: z.string().nonempty(),
+  email: z.string().email(),
+});
+
+export {
+  registerUser,
+  loginUser,
+  resetPasswordUser,
+  verifyOtpUser,
+  changePasswordUser,
+};
