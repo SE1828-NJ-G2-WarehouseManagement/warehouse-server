@@ -1,3 +1,4 @@
+import e from "express";
 import zoneService from "./zone.service.js";
 
 export const getZones = async (req, res) => {
@@ -18,3 +19,35 @@ export const getZoneCapacity = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+export const getZoneById = async (req, res) => {
+  try {
+    const zoneId = req.params.id;
+    const zone = await zoneService.getZoneById(req.user, zoneId);
+    res.status(200).json(zone);
+  } catch (error) {
+    if (error.message === "User not found") {
+      return res.status(404).json({ message: error.message });
+    }
+    if (error.message === "Zone not found or does not belong to the user's warehouse") {
+      return res.status(404).json({ message: error.message });
+    }
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const createZone = async (req, res) => {
+  try {
+    const zoneData = req.body;
+    const newZone = await zoneService.createZone(req.user, zoneData);
+    res.status(201).json(newZone);
+  } catch (error) {
+    if (error.message === "User not found") {
+      return res.status(404).json({ message: error.message });
+    }
+    res.status(500).json({ message: error.message });
+  }
+};
+
+
+

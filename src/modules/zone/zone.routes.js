@@ -5,11 +5,27 @@ import { ROLES } from "../../constant/role.constant.js";
 
 const router = express.Router();
 
+import { validateSchema } from "../main.middleware.js";
+import { createZone } from "./zone.schema.js";
+
 router.get("/", authenticationMiddleware.verifyToken, zoneController.getZones);
 router.get(
   "/capacity",
   authenticationMiddleware.verifyToken,
   zoneController.getZoneCapacity
+);
+
+router.get(
+  "/:id",
+  authenticationMiddleware.verifyToken,
+  zoneController.getZoneById
+);
+
+router.post(
+  "/",
+  authenticationMiddleware.verifyToken,
+  validateSchema(createZone),
+  zoneController.createZone
 );
 
 export default router;
