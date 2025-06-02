@@ -23,3 +23,23 @@ export const createZone = z
       }),
   })
   .strict();
+
+export const updateZone = z
+  .object({
+    name: z.string().min(1, "Zone name is required").optional(),
+    totalCapacity: z
+      .number()
+      .min(1, "Total capacity must be greater than 0")
+      .optional(),
+    storageTemperature: z
+      .object({
+        min: z.number(),
+        max: z.number(),
+      })
+      .refine((data) => data.min < data.max, {
+        message:
+          "Minimum storage temperature must be less than maximum storage temperature",
+      })
+      .optional(),
+  })
+  .strict();
