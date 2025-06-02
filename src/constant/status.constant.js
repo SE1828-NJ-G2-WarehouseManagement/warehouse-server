@@ -1,6 +1,8 @@
 const STATUS = {
     ACTIVE: 'ACTIVE',
     INACTIVE: 'INACTIVE',
+    PENDING: 'PENDING',
+    REJECTED: 'REJECTED',
 }
 
 const STATUS_SHIPPING = {
