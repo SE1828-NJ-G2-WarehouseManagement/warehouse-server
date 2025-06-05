@@ -47,4 +47,26 @@ router.post(
   supplierController.createSupplier
 );
 
+// @route   PUT /api/v1/suppliers/:id
+router.put(
+  "/:id",
+  authenticationMiddleware.verifyToken,
+  authenticationMiddleware.verifyRole(ROLES.WAREHOUSE_STAFF),
+  supplierController.updateSupplier
+);
+
+// @route   PUT /api/v1/suppliers/approve/:id
+router.put(
+  "/approve/:id",
+  authenticationMiddleware.verifyToken,
+  authenticationMiddleware.allowRoles(ROLES.WAREHOUSE_MANAGER),
+  supplierController.approveSupplier
+);
+// @route   PUT /api/v1/suppliers/reject/:id
+router.put(
+  "/reject/:id",
+  authenticationMiddleware.verifyToken,
+  authenticationMiddleware.allowRoles(ROLES.WAREHOUSE_MANAGER),
+  supplierController.rejectSupplier
+);
 export default router;

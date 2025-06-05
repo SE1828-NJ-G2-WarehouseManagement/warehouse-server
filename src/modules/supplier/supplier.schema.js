@@ -16,3 +16,4 @@ const supplierBase = z
   .strict();
 
 export const createSupplier = supplierBase;
+export const updateSupplier = supplierBase.partial();

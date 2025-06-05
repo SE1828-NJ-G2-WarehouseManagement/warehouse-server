@@ -15,6 +15,7 @@ const supplierSchema = new Schema(
       enum: [STATUS.ACTIVE, STATUS.INACTIVE, STATUS.PENDING, STATUS.REJECTED],
       default: STATUS.PENDING,
     },
+    rejectedNote: { type: String, default: null },
     approveBy: {
       type: Schema.Types.ObjectId,
       ref: "User",
