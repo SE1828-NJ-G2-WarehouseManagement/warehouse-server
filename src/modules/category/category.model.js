@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import { Schema } from "mongoose";
-import { STATUS } from "../../../constant/status.constant.js";
+import { STATUS } from "../../constant/status.constant.js";
 import User from "../user/user.model.js";
 
 const categorySchema = new Schema(
@@ -9,7 +9,7 @@ const categorySchema = new Schema(
     status: {
       type: String,
       enum: [STATUS.ACTIVE, STATUS.INACTIVE, STATUS.PENDING, STATUS.REJECTED],
-      default: STATUS.ACTIVE,
+      default: STATUS.PENDING,
     },
     reason: { type: String },
     createdBy: {
@@ -18,6 +18,11 @@ const categorySchema = new Schema(
       default: null,
     },
     updatedBy: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+    approveBy: {
       type: Schema.Types.ObjectId,
       ref: "User",
       default: null,

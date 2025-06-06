@@ -1,37 +1,33 @@
-import categoryService from "./category.service.js";
-
 import User from "../user/user.model.js";
+import productService from "./product.service.js";
 
-export const getCategories = async (req, res) => {
+export const getProducts = async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1;
-    const result = await categoryService.getCategories(page);
-    res.status(200).json(result);
+    const products = await productService.getProducts();
+    res.status(200).json(products);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-export const getCategoryById = async (req, res) => {
+export const getProductById = async (req, res) => {
   try {
     const id = req.params.id;
-    const category = await categoryService.getCategoryById(id);
-    res.status(200).json(category);
+    const product = await productService.getProductById(id);
+    res.status(200).json(product);
   } catch (error) {
-    if (error.message === "Invalid category ID") {
+    if (error.message === "Invalid product ID") {
       return res.status(400).json({ message: error.message });
     }
-    if (error.message === "Category not found") {
+    if (error.message === "Product not found") {
       return res.status(404).json({ message: error.message });
     }
     res.status(500).json({ message: error.message });
   }
 };
 
-export const createCategory = async (req, res) => {
+export const createProduct = async (req, res) => {
   try {
-    console.log("req.user:", req.user);
-
     let userId;
 
     if (req.user._id) {
@@ -45,24 +41,19 @@ export const createCategory = async (req, res) => {
     } else {
       return res.status(400).json({ message: "User ID not found in token" });
     }
-
-    console.log("Final userId:", userId);
-
-    const category = await categoryService.createCategory(req.body, userId);
-    res.status(201).json(category);
+    const product = await productService.createProduct(req.body, userId);
+    res.status(201).json(product);
   } catch (error) {
-    if (error.message === "Category name already exists") {
+    if (error.message === "Product name already exists") {
       return res.status(400).json({ message: error.message });
     }
     res.status(500).json({ message: error.message });
   }
 };
 
-export const updateCategory = async (req, res) => {
+export const updateProduct = async (req, res) => {
   try {
     const id = req.params.id;
-    console.log("req.user:", req.user);
-
     let userId;
 
     if (req.user._id) {
@@ -76,30 +67,24 @@ export const updateCategory = async (req, res) => {
     } else {
       return res.status(400).json({ message: "User ID not found in token" });
     }
-
-    console.log("Final userId:", userId);
-
-    const updatedCategory = await categoryService.updateCategory(
+    const updatedProduct = await productService.updateProduct(
       id,
       req.body,
       userId
     );
-    res.status(200).json(updatedCategory);
+    res.status(200).json(updatedProduct);
   } catch (error) {
-    if (error.message === "Invalid category ID") {
+    if (error.message === "Invalid product ID") {
       return res.status(400).json({ message: error.message });
     }
-    if (error.message === "Category not found") {
+    if (error.message === "Product not found") {
       return res.status(404).json({ message: error.message });
-    }
-    if (error.message === "Category name already exists") {
-      return res.status(400).json({ message: error.message });
     }
     res.status(500).json({ message: error.message });
   }
 };
 
-export const changeCategoryStatus = async (req, res) => {
+export const changeProductStatus = async (req, res) => {
   try {
     const { status } = req.body;
     const id = req.params.id;
@@ -116,23 +101,21 @@ export const changeCategoryStatus = async (req, res) => {
     } else {
       return res.status(400).json({ message: "User ID not found in token" });
     }
-
-    console.log("Final userId:", userId);
-    const updatedCategory = await categoryService.changeCategoryStatus(
+    if (!["ACTIVE", "INACTIVE"].includes(status)) {
+      return res.status(400).json({ message: "Invalid status" });
+    }
+    const updatedProduct = await productService.changeProductStatus(
       id,
       status,
       userId
     );
-    res.status(200).json(updatedCategory);
+    res.status(200).json(updatedProduct);
   } catch (error) {
-    if (error.message === "Invalid category ID") {
+    if (error.message === "Invalid product ID") {
       return res.status(400).json({ message: error.message });
     }
-    if (error.message === "Category not found") {
+    if (error.message === "Product not found") {
       return res.status(404).json({ message: error.message });
-    }
-    if (error.message === "Invalid status transition") {
-      return res.status(400).json({ message: error.message });
     }
     res.status(500).json({ message: error.message });
   }

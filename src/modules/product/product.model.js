@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import { Schema } from "mongoose";
-import { STATUS } from "../../../constant/status.constant.js";
+import { STATUS } from "../../constant/status.constant.js";
 import User from "../user/user.model.js";
 import Category from "../category/category.model.js";
 
@@ -11,9 +11,11 @@ const productSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: "Category",
       required: true,
+    },  
+    storageTemperature: {
+      min:{ type: Number, required: true },
+      max:{ type: Number, required: true },
     },
-    storageTemperatureMin: { type: Number },
-    storageTemperatureMax: { type: Number },
     density: { type: Number },
     image: { type: String },
     status: {
@@ -28,6 +30,11 @@ const productSchema = new Schema(
       default: null,
     },
     updatedBy: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+    approveBy: {
       type: Schema.Types.ObjectId,
       ref: "User",
       default: null,
