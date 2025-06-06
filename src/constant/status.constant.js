@@ -5,6 +5,7 @@ const STATUS = {
   REJECTED: "REJECTED",
 };
 
+
 const STATUS_SHIPPING = {
     PENDING: 'PENDING',
     COMPLETED: 'COMPLETED',
