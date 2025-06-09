@@ -31,10 +31,21 @@ const changePasswordUser = z.object({
   email: z.string().email(),
 });
 
+const updateProfileUser = z.object({
+  username: z.string().min(3).max(30).optional(),
+  phone: z.string().regex(/^\d{9,11}$/, {
+    message: "Phone number must be between 9 and 11 digits"
+  }).optional(),
+  avatar: z.string().url().optional(),
+  firstName: z.string().min(1).optional(),
+  lastName: z.string().min(1).optional(),
+});
+
 export {
   registerUser,
   loginUser,
   resetPasswordUser,
   verifyOtpUser,
   changePasswordUser,
+  updateProfileUser
 };
