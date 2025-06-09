@@ -5,6 +5,7 @@ import zoneRouter from './zone/zone.routes.js';
 import categoryRouter from './category/category.routes.js';
 import productRouter from './product/product.router.js';
 import zoneItemRouter from './zoneitem/zoneItem.routes.js';
+import customerRouter from './customer/customer.routes.js';
 import supplierRouter from './supplier/supplier.routes.js';
 const mainRouter = express.Router();
 
@@ -16,4 +17,6 @@ mainRouter.use('/categories', categoryRouter);
 mainRouter.use('/products', productRouter);
 mainRouter.use('/suppliers', supplierRouter);
 mainRouter.use('/zone-items', zoneItemRouter);
+mainRouter.use('/customers', customerRouter);
+
 export default mainRouter;
