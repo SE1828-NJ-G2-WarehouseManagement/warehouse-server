@@ -6,7 +6,7 @@ import { ROLES } from "../../constant/role.constant.js";
 const router = express.Router();
 
 import { validateSchema } from "../main.middleware.js";
-import { createZone } from "./zone.schema.js";
+import { createZone, updateZone } from "./zone.schema.js";
 
 router.get("/", authenticationMiddleware.verifyToken, zoneController.getZones);
 router.get(
@@ -26,6 +26,19 @@ router.post(
   authenticationMiddleware.verifyToken,
   validateSchema(createZone),
   zoneController.createZone
+);
+
+router.put(
+  "/:id",
+  authenticationMiddleware.verifyToken,
+  validateSchema(updateZone),
+  zoneController.updateZone
+);
+
+router.post(
+  "/:id/status",
+  authenticationMiddleware.verifyToken,
+  zoneController.changeStatusZone
 );
 
 export default router;

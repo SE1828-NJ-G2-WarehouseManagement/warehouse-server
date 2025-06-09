@@ -29,7 +29,10 @@ export const getZoneById = async (req, res) => {
     if (error.message === "User not found") {
       return res.status(404).json({ message: error.message });
     }
-    if (error.message === "Zone not found or does not belong to the user's warehouse") {
+    if (
+      error.message ===
+      "Zone not found or does not belong to the user's warehouse"
+    ) {
       return res.status(404).json({ message: error.message });
     }
     res.status(500).json({ message: error.message });
@@ -49,5 +52,50 @@ export const createZone = async (req, res) => {
   }
 };
 
+export const updateZone = async (req, res) => {
+  try {
+    const zoneId = req.params.id;
+    const zoneData = req.body;
+    const updatedZone = await zoneService.updateZone(
+      req.user,
+      zoneId,
+      zoneData
+    );
+    res.status(200).json(updatedZone);
+  } catch (error) {
+    if (error.message === "User not found") {
+      return res.status(404).json({ message: error.message });
+    }
+    if (
+      error.message ===
+      "Zone not found or does not belong to the user's warehouse"
+    ) {
+      return res.status(404).json({ message: error.message });
+    }
+    res.status(500).json({ message: error.message });
+  }
+};
 
-
+export const changeStatusZone = async (req, res) => {
+  try {
+    const zoneId = req.params.id;
+    const { status } = req.body;
+    const updatedZone = await zoneService.changeStatusZone(
+      req.user,
+      zoneId,
+      status
+    );
+    res.status(200).json(updatedZone);
+  } catch (error) {
+    if (error.message === "User not found") {
+      return res.status(404).json({ message: error.message });
+    }
+    if (
+      error.message ===
+      "Zone not found or does not belong to the user's warehouse"
+    ) {
+      return res.status(404).json({ message: error.message });
+    }
+    res.status(500).json({ message: error.message });
+  }
+};
