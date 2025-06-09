@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import { Schema } from "mongoose";
-import { STATUS } from "../constant/status.constant.js";
+import { STATUS } from "../../constant/status.constant.js";
 
 const itemSchema = new Schema(
   {
