@@ -19,7 +19,7 @@ const validateSchema = (schema) => {
 const verifyToken = async (req, res, next) => {
   const authHeader = req.headers["authorization"];
   const token = authHeader && authHeader.split(PREFIX.SPLIT_PREFIX)[1];
-
+  
   //verify => token
   if (!token) {
     return res.status(401).json({ message: "Access token is missing" });

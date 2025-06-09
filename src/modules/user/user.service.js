@@ -11,6 +11,7 @@ import {
   saveOtpVerified,
 } from "../../utils/otp.utils.js";
 import User from "./user.model.js";
+import { ROLES } from "../../constant/role.constant.js";
 
 const login = async (email, password) => {
   try {
@@ -87,7 +88,7 @@ const verifyOtp = async (otp, email) => {
     if (otp !== otpStored) {
       throw new Error("Invalid otp verify");
     }
-    
+
     await saveOtpVerified(email);
     await deleteOtpStored(email);
   } catch (error) {
@@ -121,4 +122,62 @@ const changePassword = async (password, email) => {
   }
 };
 
-export { login, register, resetPassword, verifyOtp, changePassword };
+const viewProfile = async (email) => {
+  try {
+    const userFound = await User.findOne({ email }).select(
+      "-password -__v -createdAt -updatedAt -role -_id"
+    );
+
+    if (!userFound) {
+      throw new Error("User not found");
+    }
+    return userFound;
+  } catch (error) {
+    throw error;
+  }
+};
+
+const updateProfile = async (email, username, phone, address, avatar, firstName, lastName) => {
+  try {
+    const userFound = await User.findOne({ email });
+
+    if (!userFound) {
+      throw new Error("User not found");
+    }
+
+    userFound.username = username;
+    userFound.phone = phone;
+    userFound.avatar = avatar;
+    userFound.firstName = firstName;
+    userFound.lastName = lastName;
+    userFound.updatedAt = new Date();
+
+    await userFound.save();
+
+    return userFound;
+  } catch(error) {
+    throw error;
+  }
+}
+
+const getAllUser = async () => {
+  try {
+    const listUser = await User.find({
+      role: { $ne: ROLES.ADMIN_WAREHOUSE }
+    }).select('-password');
+    return listUser;
+  } catch (error) {
+    throw error;
+  }
+}
+
+export {
+  login,
+  register,
+  resetPassword,
+  verifyOtp,
+  changePassword,
+  viewProfile,
+  updateProfile,
+  getAllUser
+};
