@@ -11,3 +11,22 @@ export const getItemByZoneId = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+export const transferBetweenZone = async (req, res) => {
+  try {
+    const { sourceZoneId, destinationZoneId, itemId, quantity } = req.body;
+    const user = req.user;
+
+    const result = await zoneItemService.transferBetweenZone(
+      sourceZoneId,
+      destinationZoneId,
+      itemId,
+      quantity,
+      user
+    );
+
+    return res.status(200).json(result);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
