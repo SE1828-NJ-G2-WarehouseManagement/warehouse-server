@@ -12,6 +12,8 @@ import {
 } from "../../utils/otp.utils.js";
 import User from "./user.model.js";
 import { ROLES } from "../../constant/role.constant.js";
+import Warehouse from "../warehouse/warehouse.model.js";
+import { STATUS } from "../../constant/status.constant.js";
 
 const login = async (email, password) => {
   try {
@@ -171,6 +173,56 @@ const getAllUser = async () => {
   }
 }
 
+const getAllManagerAvailable = async () => {
+  try {
+    const listManager = await User.find({
+      role: {$eq: ROLES.WAREHOUSE_MANAGER},
+      assignedWarehouse: {$eq: null}
+    }).select('-password');
+
+    return listManager;
+  } catch (error) {
+    throw error;
+  }
+}
+
+const getUserById = async (id) => {
+  try {
+    const user = await User.findById(id).select('-password');
+    return user;
+  } catch (error) {
+    throw error;
+  }
+}
+
+const getAllStaffAvailable = async () => {
+  try {
+    // Get all staff users
+    const staffs = await User.find({
+      role: ROLES.WAREHOUSE_STAFF
+    }).select('-password');
+
+    // Get all active warehouses
+    const warehouses = await Warehouse.find({
+      status: STATUS.ACTIVE
+    });
+
+    // Get all staff IDs that are already assigned to warehouses
+    const assignedStaffIds = warehouses.reduce((acc, warehouse) => {
+      return [...acc, ...(warehouse.staffs || [])];
+    }, []);
+
+    // Filter out staff that are already assigned
+    const staffsAvailable = staffs.filter(staff => 
+      !assignedStaffIds.includes(staff._id.toString())
+    );
+
+    return staffsAvailable;
+  } catch (error) {
+    throw error;
+  }
+}
+
 export {
   login,
   register,
@@ -179,5 +231,8 @@ export {
   changePassword,
   viewProfile,
   updateProfile,
-  getAllUser
+  getAllUser,
+  getAllManagerAvailable,
+  getAllStaffAvailable,
+  getUserById
 };

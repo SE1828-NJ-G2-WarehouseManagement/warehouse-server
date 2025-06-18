@@ -1,6 +1,8 @@
 import express from "express";
 import {
   changePassword,
+  getAllManagerAvailable,
+  getAllStaffAvailable,
   getAllUser,
   login,
   register,
@@ -66,6 +68,24 @@ userRouter.get(
   authenticationMiddleware.verifyToken,
   authenticationMiddleware.verifyRole(ROLES.ADMIN_WAREHOUSE),
   getAllUser
+);
+
+// @route   GET /api/v1/users/get-manager-available
+// @desc    list manager available
+userRouter.get(
+  "/get-manager-available",
+  authenticationMiddleware.verifyToken,
+  authenticationMiddleware.verifyRole(ROLES.ADMIN_WAREHOUSE),
+  getAllManagerAvailable
+);
+
+// @route   GET /api/v1/users/get-staff-available
+// @desc    list staff available
+userRouter.get(
+  "/get-staff-available",
+  authenticationMiddleware.verifyToken,
+  authenticationMiddleware.verifyRole(ROLES.ADMIN_WAREHOUSE),
+  getAllStaffAvailable
 );
 
 // @route   POST /api/v1/users/update-profile

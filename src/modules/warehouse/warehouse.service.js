@@ -202,7 +202,7 @@ const updateWarehouse = async (id, data) => {
     data.manageBy !== oldWarehouse.manageBy.toString()
   ) {
     await User.findByIdAndUpdate(oldWarehouse.manageBy, {
-      assignedWarehouse: null,
+      assignedWarehouse: null,  
     });
   }
 

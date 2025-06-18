@@ -145,6 +145,24 @@ const updateProfile = async (req, res) => {
   }
 };
 
+
+const getUserById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user = await userService.getUserById(id);
+    return res.status(200).json({
+      message: "Get user by id successfully",
+      isSuccess: true,
+      user,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Get user by id failed",
+      isSuccess: false,
+    });
+  }
+}
+
 const getAllUser = async (req, res) => {
   try {
     const data = await userService.getAllUser();
@@ -162,6 +180,39 @@ const getAllUser = async (req, res) => {
   }
 };
 
+const getAllManagerAvailable = async (req, res) => {
+  try {
+    const data = await userService.getAllManagerAvailable();
+    console.log(data);
+    return res.status(200).json({
+      message: "Get list manager available successfully",
+      isSuccess: true,
+      data,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Get list failed",
+      isSuccess: false,
+    });
+  }
+};
+
+const getAllStaffAvailable = async (req, res) => {
+  try {
+    const data = await userService.getAllStaffAvailable();
+    return res.status(200).json({
+      message: "Get list staff available successfully",
+      isSuccess: true,
+      data,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Get list failed",
+      isSuccess: false,
+    });
+  }
+}
+
 export {
   login,
   register,
@@ -170,5 +221,8 @@ export {
   changePassword,
   viewProfile,
   updateProfile,
-  getAllUser
+  getAllUser,
+  getAllManagerAvailable,
+  getAllStaffAvailable,
+  getUserById
 };
