@@ -166,7 +166,8 @@ const getAllUser = async () => {
   try {
     const listUser = await User.find({
       role: { $ne: ROLES.ADMIN_WAREHOUSE }
-    }).select('-password');
+    }).select('-password')
+    .populate('assignedWarehouse', 'name');
     return listUser;
   } catch (error) {
     throw error;

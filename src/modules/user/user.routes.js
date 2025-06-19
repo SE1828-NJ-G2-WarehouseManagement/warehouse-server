@@ -83,8 +83,6 @@ userRouter.get(
 // @desc    list staff available
 userRouter.get(
   "/get-staff-available",
-  authenticationMiddleware.verifyToken,
-  authenticationMiddleware.verifyRole(ROLES.ADMIN_WAREHOUSE),
   getAllStaffAvailable
 );
 
