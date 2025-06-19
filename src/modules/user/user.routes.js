@@ -1,6 +1,7 @@
 import express from "express";
 import {
   changePassword,
+  deleteUserByEmail,
   getAllManagerAvailable,
   getAllStaffAvailable,
   getAllUser,
@@ -22,6 +23,7 @@ import {
 } from "./user.schema.js";
 import * as authenticationMiddleware from "../main.middleware.js";
 import { ROLES } from "../../constant/role.constant.js";
+import { upload } from "../../config/cloudinary.js";
 
 const userRouter = express.Router();
 
@@ -86,13 +88,23 @@ userRouter.get(
   getAllStaffAvailable
 );
 
-// @route   POST /api/v1/users/update-profile
+// @route   PUT /api/v1/users/update-profile
 // @desc    update profile
-userRouter.post(
+userRouter.put(
   "/update-profile",
   authenticationMiddleware.verifyToken,
+  upload.single('avatar'),
   validateSchema(updateProfileUser),
   updateProfile
+);
+
+// @route   DELETE /api/v1/users/delete-user-by-email
+// @desc    delete user by email
+userRouter.delete(
+  "/delete-user-by-email",
+  authenticationMiddleware.verifyToken,
+  authenticationMiddleware.verifyRole(ROLES.ADMIN_WAREHOUSE),
+  deleteUserByEmail
 );
 
 export default userRouter;

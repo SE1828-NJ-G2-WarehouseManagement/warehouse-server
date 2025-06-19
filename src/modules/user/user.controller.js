@@ -41,7 +41,14 @@ const register = async (req, res) => {
       isSuccess: true,
     });
   } catch (error) {
-    return res.json({
+    if (error.message === "User has existed") {
+      return res.status(400).json({
+        data: null,
+        isSuccess: false,
+        message: "User has existed",
+      });
+    }
+    return res.status(500).json({
       data: null,
       isSuccess: false,
       message: "Register failed",
@@ -120,16 +127,25 @@ const viewProfile = async (req, res) => {
 
 const updateProfile = async (req, res) => {
   try {
-    const { email } = req.user;
-    const { username, phone, avatar, firstName, lastName } = req.body;
+    const { emailUserUpdate, username, phone, firstName, lastName } = req.body;
 
-    await userService.updateProfile(
-      firstName,
-      lastName,
+    console.log(`emailUserUpdate: ${emailUserUpdate}`);
+    console.log(`username: ${username}`);
+    console.log(`phone: ${phone}`);
+    console.log(`firstName: ${firstName}`);
+    console.log(`lastName: ${lastName}`);
+
+    // Get avatar URL from uploaded file if exists
+    const avatar = req.file ? req.file.path : undefined;
+    
+
+    const updatedUser = await userService.updateProfile(
+      emailUserUpdate,
       username,
       phone,
       avatar,
-      email
+      firstName,
+      lastName
     );
 
     return res.status(200).json({
@@ -138,6 +154,7 @@ const updateProfile = async (req, res) => {
       user: updatedUser,
     });
   } catch (error) {
+    console.log(`error: ${error}`);
     return res.status(500).json({
       message: "Update profile failed",
       isSuccess: false,
@@ -213,6 +230,22 @@ const getAllStaffAvailable = async (req, res) => {
   }
 }
 
+const deleteUserByEmail = async (req, res) => {
+  try {
+    const { email } = req.body;
+    await userService.deleteUserByEmail(email);
+    return res.status(200).json({
+      message: "Delete user successfully",
+      isSuccess: true,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Delete user failed",
+      isSuccess: false,
+    });
+  }
+}
+
 export {
   login,
   register,
@@ -224,5 +257,6 @@ export {
   getAllUser,
   getAllManagerAvailable,
   getAllStaffAvailable,
-  getUserById
+  getUserById,
+  deleteUserByEmail
 };
