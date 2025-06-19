@@ -129,12 +129,6 @@ const updateProfile = async (req, res) => {
   try {
     const { emailUserUpdate, username, phone, firstName, lastName } = req.body;
 
-    console.log(`emailUserUpdate: ${emailUserUpdate}`);
-    console.log(`username: ${username}`);
-    console.log(`phone: ${phone}`);
-    console.log(`firstName: ${firstName}`);
-    console.log(`lastName: ${lastName}`);
-
     // Get avatar URL from uploaded file if exists
     const avatar = req.file ? req.file.path : undefined;
     
@@ -151,7 +145,7 @@ const updateProfile = async (req, res) => {
     return res.status(200).json({
       message: "Update profile successfully",
       isSuccess: true,
-      user: updatedUser,
+      data: updatedUser,
     });
   } catch (error) {
     console.log(`error: ${error}`);
