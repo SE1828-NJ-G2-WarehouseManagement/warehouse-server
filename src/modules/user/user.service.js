@@ -14,6 +14,7 @@ import User from "./user.model.js";
 import { ROLES } from "../../constant/role.constant.js";
 import Warehouse from "../warehouse/warehouse.model.js";
 import { STATUS } from "../../constant/status.constant.js";
+import { deleteImage } from "../../config/cloudinary.js";
 
 const login = async (email, password) => {
   try {
@@ -139,13 +140,29 @@ const viewProfile = async (email) => {
   }
 };
 
-const updateProfile = async (email, username, phone, address, avatar, firstName, lastName) => {
+const updateProfile = async (email, username, phone, avatar, firstName, lastName) => {
   try {
     const userFound = await User.findOne({ email });
 
     if (!userFound) {
       throw new Error("User not found");
     }
+
+    // If there's a new avatar and user has an existing avatar, delete the old one
+    if (avatar && userFound.avatar !== null) {
+      try {
+        const oldAvatarUrl = userFound.avatar;
+        const publicIdMatch = oldAvatarUrl.match(/warehouse-avatars\/([^\/]+)/);
+        if (publicIdMatch) {
+          const publicId = `warehouse-avatars/${publicIdMatch[1]}`;
+          await deleteImage(publicId);
+        }
+      } catch (error) {
+        console.error('Error deleting old avatar:', error);
+        // Continue with update even if deletion fails
+      }
+    }
+
 
     userFound.username = username;
     userFound.phone = phone;
@@ -154,9 +171,9 @@ const updateProfile = async (email, username, phone, address, avatar, firstName,
     userFound.lastName = lastName;
     userFound.updatedAt = new Date();
 
-    await userFound.save();
+    const updatedUser = await userFound.save();
 
-    return userFound;
+    return updatedUser;
   } catch(error) {
     throw error;
   }
@@ -224,6 +241,19 @@ const getAllStaffAvailable = async () => {
   }
 }
 
+const deleteUserByEmail = async (email) => {
+  try {
+    const user = await User.findOne({ email });
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    await user.deleteOne();
+  } catch (error) {
+    throw error;
+  }
+}
+
 export {
   login,
   register,
@@ -235,5 +265,6 @@ export {
   getAllUser,
   getAllManagerAvailable,
   getAllStaffAvailable,
-  getUserById
+  getUserById,
+  deleteUserByEmail
 };

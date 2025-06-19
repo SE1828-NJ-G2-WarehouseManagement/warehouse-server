@@ -36,9 +36,9 @@ const updateProfileUser = z.object({
   phone: z.string().regex(/^\d{9,11}$/, {
     message: "Phone number must be between 9 and 11 digits"
   }).optional(),
-  avatar: z.string().url().optional(),
   firstName: z.string().min(1).optional(),
   lastName: z.string().min(1).optional(),
+  emailUserUpdate: z.string().email(),
 });
 
 export {
