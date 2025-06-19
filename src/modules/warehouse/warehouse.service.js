@@ -156,7 +156,7 @@ const updateWarehouse = async (id, data) => {
   }
 
   // Kiểm tra manager
-  if (data.manageBy) {
+  if (data.manageBy && data.manageBy !== oldWarehouse.manageBy.toString()) {
     const manager = await User.findById(data.manageBy);
     if (!manager) {
       throw new Error("Manage not found");
