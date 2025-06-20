@@ -8,6 +8,7 @@ import zoneItemRouter from './zoneitem/zoneItem.routes.js';
 import customerRouter from './customer/customer.routes.js';
 import supplierRouter from './supplier/supplier.routes.js';
 import inboundOrderRouter from './inboundorder/inboundorder.routes.js'
+import expireRouter from './expired/expired.routes.js';
 
 const mainRouter = express.Router();
 
@@ -21,5 +22,6 @@ mainRouter.use('/suppliers', supplierRouter);
 mainRouter.use('/zone-items', zoneItemRouter);
 mainRouter.use('/customers', customerRouter);
 mainRouter.use("/inbounds",inboundOrderRouter);
+mainRouter.use('/expired', expireRouter);
 
 export default mainRouter;

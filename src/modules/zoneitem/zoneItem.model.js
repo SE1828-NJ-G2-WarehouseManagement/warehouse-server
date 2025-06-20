@@ -23,5 +23,6 @@ const zoneItemSchema = new Schema(
   { timestamps: true }
 );
 
-const ZoneItem = mongoose.model("ZoneItem", zoneItemSchema);
+const ZoneItem =
+  mongoose.models.ZoneItem || mongoose.model("ZoneItem", zoneItemSchema);
 export default ZoneItem;

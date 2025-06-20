@@ -6,7 +6,7 @@ import Supplier from "../supplier/supplier.model.js";
 import { STATUS } from "../../constant/status.constant.js";
 import { ROLES } from "../../constant/role.constant.js";
 import Item from "../item/item.model.js";
-import ZoneItem from "../zoneitem/zoneItem.model.js";
+import ZoneItem from "../zoneitem/zoneitem.model.js";
 import PAGE_SIZE from "../../constant/pageSize.constant.js";
 
 const createInboundOrder = async (data, user) => {
