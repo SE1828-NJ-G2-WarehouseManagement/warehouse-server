@@ -31,6 +31,12 @@ const changePasswordUser = z.object({
   email: z.string().email(),
 });
 
+const changePasswordForm = z.object({
+  currentPassword: z.string().nonempty(),
+  newPassword: z.string().nonempty(),
+  email: z.string().email(),
+});
+
 const updateProfileUser = z.object({
   username: z.string().min(3).max(30).optional(),
   phone: z.string().regex(/^\d{9,11}$/, {
@@ -47,5 +53,6 @@ export {
   resetPasswordUser,
   verifyOtpUser,
   changePasswordUser,
-  updateProfileUser
+  updateProfileUser,
+  changePasswordForm
 };

@@ -125,6 +125,41 @@ const changePassword = async (password, email) => {
   }
 };
 
+const changePasswordUser = async (currentPassword, newPassword, email) => {
+  try {
+    const userFound = await User.findOne({ email });    
+    if (!userFound) {
+      return {
+        isSuccess: false,
+        message: "User not found",
+      };
+    }   
+    const isValidPassword = await JwtUtils.comparePassword(
+      currentPassword,
+      userFound.password
+    );
+    if (!isValidPassword) {
+      return {
+        isSuccess: false,
+        message: "Current password is incorrect",
+      };
+    } 
+    const hashedPassword = await JwtUtils.hashPassword(newPassword);
+    userFound.password = hashedPassword;
+    await userFound.save();
+    return {
+      isSuccess: true,
+      message: "Password changed successfully",
+    };
+  } catch (error) {
+    console.error(`Error in changePasswordUser: ${error}`);
+    return {
+      isSuccess: false,
+      message: "An error occurred while changing password",
+    };
+  }
+};  
+
 const viewProfile = async (email) => {
   try {
     const userFound = await User.findOne({ email }).select(
@@ -266,5 +301,6 @@ export {
   getAllManagerAvailable,
   getAllStaffAvailable,
   getUserById,
-  deleteUserByEmail
+  deleteUserByEmail,
+  changePasswordUser
 };
