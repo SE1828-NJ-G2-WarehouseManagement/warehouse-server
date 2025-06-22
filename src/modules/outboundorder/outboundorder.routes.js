@@ -12,4 +12,23 @@ router.post(
   outboundOrderController.createOutboundOrder
 );
 
+router.get(
+  "/",
+  authenticationMiddleware.verifyToken,
+  authenticationMiddleware.allowRoles(
+    ROLES.WAREHOUSE_MANAGER,
+    ROLES.WAREHOUSE_STAFF
+  ),
+  outboundOrderController.getListOutboundOrder
+);
 export default router;
+
+router.get(
+  "/:id",
+  authenticationMiddleware.verifyToken,
+  authenticationMiddleware.allowRoles(
+    ROLES.WAREHOUSE_MANAGER,
+    ROLES.WAREHOUSE_STAFF
+  ),
+  outboundOrderController.getOutboundOrderById
+);

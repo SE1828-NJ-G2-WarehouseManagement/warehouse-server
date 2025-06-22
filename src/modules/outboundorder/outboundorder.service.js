@@ -44,6 +44,35 @@ const createOutboundOrder = async (data, user) => {
   return outboundOrder;
 };
 
+const getListOutboundOrder = async (page) => {
+  const skip = (page - 1) * PAGE_SIZE;
+  const [data, total] = await Promise.all([
+    OutboundOrder.find()
+      .populate("customerId")
+      .populate("createBy")
+      .populate("items.zoneItem")
+      .skip(skip)
+      .limit(PAGE_SIZE),
+    OutboundOrder.countDocuments({}),
+  ]);
+  return {
+    data,
+    total,
+    page,
+    pageSize: PAGE_SIZE,
+    totalPages: Math.ceil(total / PAGE_SIZE),
+  };
+};
+
+const getOutboundOrderById = async (id) => {
+  return await OutboundOrder.findById(id)
+    .populate("customerId")
+    .populate("createBy")
+    .populate("items.zoneItem");
+};
+
 export default {
   createOutboundOrder,
+  getListOutboundOrder,
+  getOutboundOrderById,
 };
