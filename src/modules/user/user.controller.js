@@ -1,4 +1,5 @@
 import JwtUtils from "../../utils/auth.utils.js";
+import { changePasswordUser } from "./user.schema.js";
 import * as userService from "./user.service.js";
 
 const login = async (req, res) => {
@@ -92,7 +93,7 @@ const changePassword = async (req, res) => {
   try {
     const { newPassword, email } = req.body;
 
-    await userService.changePassword(newPassword, email);
+    await userService.changePasswordSetting(newPassword, email);
 
     return res.status(200).json({
       message: "change password successfully",
@@ -101,6 +102,30 @@ const changePassword = async (req, res) => {
   } catch (error) {
     return res.status(400).json({
       message: "change password failed",
+      isSuccess: false,
+    });
+  }
+};
+
+const changePasswordSetting = async (req, res) => {
+  try {
+    const { currentPassword, newPassword, email } = req.body;  
+    const result = await userService.changePasswordUser(currentPassword, newPassword, email);
+    if (result.isSuccess) {
+      return res.status(200).json({
+        message: "Change password successfully",
+        isSuccess: true,
+      });
+    } else {
+      return res.status(400).json({
+        message: result.message || "Change password failed",
+        isSuccess: false,
+      });
+    }
+  } catch (error) {
+    console.error(`Error in changePasswordUser: ${error}`);
+    return res.status(500).json({
+      message: "Change password failed",
       isSuccess: false,
     });
   }
@@ -127,14 +152,14 @@ const viewProfile = async (req, res) => {
 
 const updateProfile = async (req, res) => {
   try {
-    const { emailUserUpdate, username, phone, firstName, lastName } = req.body;
+    const { email, username, phone, firstName, lastName } = req.body;
 
     // Get avatar URL from uploaded file if exists
     const avatar = req.file ? req.file.path : undefined;
     
 
     const updatedUser = await userService.updateProfile(
-      emailUserUpdate,
+      email,
       username,
       phone,
       avatar,
@@ -252,5 +277,6 @@ export {
   getAllManagerAvailable,
   getAllStaffAvailable,
   getUserById,
-  deleteUserByEmail
+  deleteUserByEmail,
+  changePasswordSetting
 };

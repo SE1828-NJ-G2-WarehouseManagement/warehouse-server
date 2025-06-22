@@ -31,14 +31,20 @@ const changePasswordUser = z.object({
   email: z.string().email(),
 });
 
+const changePasswordForm = z.object({
+  currentPassword: z.string().nonempty(),
+  newPassword: z.string().nonempty(),
+  email: z.string().email(),
+});
+
 const updateProfileUser = z.object({
   username: z.string().min(3).max(30).optional(),
   phone: z.string().regex(/^\d{9,11}$/, {
     message: "Phone number must be between 9 and 11 digits"
-  }).optional(),
+  }).nullable().optional(),
   firstName: z.string().min(1).optional(),
   lastName: z.string().min(1).optional(),
-  emailUserUpdate: z.string().email(),
+  email: z.string().email().optional(),
 });
 
 export {
@@ -47,5 +53,6 @@ export {
   resetPasswordUser,
   verifyOtpUser,
   changePasswordUser,
-  updateProfileUser
+  updateProfileUser,
+  changePasswordForm
 };

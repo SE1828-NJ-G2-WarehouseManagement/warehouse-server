@@ -1,6 +1,7 @@
 import express from "express";
 import {
   changePassword,
+  changePasswordSetting,
   deleteUserByEmail,
   getAllManagerAvailable,
   getAllStaffAvailable,
@@ -20,6 +21,7 @@ import {
   verifyOtpUser,
   changePasswordUser,
   updateProfileUser,
+  changePasswordForm,
 } from "./user.schema.js";
 import * as authenticationMiddleware from "../main.middleware.js";
 import { ROLES } from "../../constant/role.constant.js";
@@ -53,6 +55,14 @@ userRouter.post(
   "/change-password",
   validateSchema(changePasswordUser),
   changePassword
+);
+
+// @route   GET /api/v1/users/change-password-setting
+// @desc    change password user
+userRouter.post(
+  "/change-password-setting",
+  validateSchema(changePasswordForm),
+  changePasswordSetting
 );
 
 // @route   GET /api/v1/users/view-profile
