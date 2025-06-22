@@ -127,14 +127,14 @@ const viewProfile = async (req, res) => {
 
 const updateProfile = async (req, res) => {
   try {
-    const { emailUserUpdate, username, phone, firstName, lastName } = req.body;
+    const { email, username, phone, firstName, lastName } = req.body;
 
     // Get avatar URL from uploaded file if exists
     const avatar = req.file ? req.file.path : undefined;
     
 
     const updatedUser = await userService.updateProfile(
-      emailUserUpdate,
+      email,
       username,
       phone,
       avatar,

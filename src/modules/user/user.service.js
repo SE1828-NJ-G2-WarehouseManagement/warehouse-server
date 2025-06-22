@@ -128,7 +128,7 @@ const changePassword = async (password, email) => {
 const viewProfile = async (email) => {
   try {
     const userFound = await User.findOne({ email }).select(
-      "-password -__v -createdAt -updatedAt -role -_id"
+      "-password -__v -createdAt -updatedAt -_id"
     );
 
     if (!userFound) {
