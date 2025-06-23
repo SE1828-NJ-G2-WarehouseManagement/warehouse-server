@@ -3,9 +3,21 @@ import outboundOrderService from "./outboundorder.service.js";
 export const createOutboundOrder = async (req, res) => {
   try {
     const outboundData = req.body;
+    let userId;
+    if (req.user._id) {
+          userId = req.user._id;
+        } else if (req.user.email) {
+          const user = await User.findOne({ email: req.user.email });
+          if (!user) {
+            return res.status(401).json({ message: "User not found" });
+          }
+          userId = user._id;
+        } else {
+          return res.status(400).json({ message: "User ID not found in token" });
+        }
     const outboundOrder = await outboundOrderService.createOutboundOrder(
       outboundData,
-      req.user
+      userId
     );
     return res.status(201).json(outboundOrder);
   } catch (error) {

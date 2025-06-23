@@ -39,3 +39,4 @@ const outboundOrderSchema = new Schema(
 );
 
 const OutboundOrder = mongoose.model("OutboundOrder", outboundOrderSchema);
+export default OutboundOrder;
