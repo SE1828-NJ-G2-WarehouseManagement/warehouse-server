@@ -3,7 +3,7 @@ import Customer from "../customer/customer.model.js";
 import User from "../user/user.model.js";
 import ZoneItem from "../zoneitem/zoneitem.model.js";
 
-const createOutboundOrder = async (data, user) => {
+const createOutboundOrder = async (data, userId) => {
   const { customerId, signed, items, quantity } = data;
 
   // Kiểm tra customer
@@ -11,7 +11,7 @@ const createOutboundOrder = async (data, user) => {
   if (!customer) throw new Error("Customer not found");
 
   // Kiểm tra user
-  const userCurrent = await User.findById(user._id);
+  const userCurrent = await User.findById(userId);
   if (!userCurrent) throw new Error("User not found");
 
   // Kiểm tra từng item
