@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import { Schema } from "mongoose";
 import { STATUS } from "../../constant/status.constant.js";
+import { ACTION } from "../../constant/action.constant.js";
 import User from "../user/user.model.js";
 
 const supplierSchema = new Schema(
@@ -12,7 +13,7 @@ const supplierSchema = new Schema(
     taxId: { type: String, unique: true, required: true },
     status: {
       type: String,
-      enum: [STATUS.ACTIVE, STATUS.INACTIVE, STATUS.PENDING, STATUS.REJECTED],
+      enum: [ STATUS.PENDING,STATUS.APPROVED, STATUS.REJECTED],
       default: STATUS.PENDING,
     },
     rejectedNote: { type: String, default: null },
@@ -20,6 +21,11 @@ const supplierSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: "User",
       default: null,
+    },
+    action: {
+      type: String,
+      enum: [ACTION.ACTIVE, ACTION.INACTIVE],
+      default: ACTION.INACTIVE,
     },
   },
   { timestamps: true }

@@ -34,7 +34,10 @@ export const getSupplierById = async (req, res) => {
 export const createSupplier = async (req, res) => {
   try {
     const supplierData = req.body;
-    const newSupplier = await supplierService.createSupplier(supplierData);
+    const newSupplier = await supplierService.createSupplier(
+      supplierData,
+      req.user
+    );
     res.status(201).json(newSupplier);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -47,7 +50,8 @@ export const updateSupplier = async (req, res) => {
     const updatedData = req.body;
     const updatedSupplier = await supplierService.updateSupplier(
       supplierId,
-      updatedData
+      updatedData,
+      req.user
     );
     res.status(200).json(updatedSupplier);
   } catch (error) {
