@@ -1,4 +1,5 @@
 import outboundOrderService from "./outboundorder.service.js";
+import User from "../user/user.model.js";
 
 export const createOutboundOrder = async (req, res) => {
   try {
