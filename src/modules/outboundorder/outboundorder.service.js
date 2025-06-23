@@ -38,7 +38,7 @@ const createOutboundOrder = async (data, userId) => {
     signed,
     items,
     quantity,
-    createBy: user._id,
+    createBy: userId,
   });
 
   return outboundOrder;
