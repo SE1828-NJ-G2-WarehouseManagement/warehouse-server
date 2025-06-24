@@ -22,3 +22,13 @@ export const getListInboundOrder = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+export const getInboundById = async (req, res) => {
+  try {
+    const id = req.params.id;
+    const inboundOrder = await inboundOrderService.getInboundById(id);
+    res.status(200).json(inboundOrder);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};

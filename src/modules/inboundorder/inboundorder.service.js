@@ -8,6 +8,7 @@ import { ROLES } from "../../constant/role.constant.js";
 import Item from "../item/item.model.js";
 import ZoneItem from "../zoneitem/zoneitem.model.js";
 import PAGE_SIZE from "../../constant/pageSize.constant.js";
+import mongoose from "mongoose";
 
 const createInboundOrder = async (data, user) => {
   const { zoneId, items, supplierId } = data;
@@ -143,6 +144,7 @@ const getListInboundOrder = async (page) => {
     InboundOrder.find()
       .populate("createdBy")
       .populate("zoneId")
+      .populate("item.productId")
       .skip(skip)
       .limit(PAGE_SIZE),
     InboundOrder.countDocuments({}),
@@ -156,7 +158,26 @@ const getListInboundOrder = async (page) => {
   };
 };
 
+const getInboundById = async (id) => {
+  if (!id) {
+    throw new Error("ID is required");
+  }
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    throw new Error("Invalid ID format");
+  }
+  
+  const inboundOrder = await InboundOrder.findById(id)
+    .populate("createdBy")
+    .populate("zoneId")
+    .populate("item.productId");
+  if (!inboundOrder) {
+    throw new Error("Inbound order not found");
+  }
+  return inboundOrder;
+};
+
 export default {
   createInboundOrder,
   getListInboundOrder,
+  getInboundById,
 };
