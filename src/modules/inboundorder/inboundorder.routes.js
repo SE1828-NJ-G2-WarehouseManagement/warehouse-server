@@ -25,4 +25,15 @@ router.get(
   inboundOrderController.getListInboundOrder
 );
 
+// xem chi tiết phiếu nhập
+router.get(
+  "/:id",
+  authenticationMiddleware.verifyToken,
+  authenticationMiddleware.allowRoles(
+    ROLES.WAREHOUSE_MANAGER,
+    ROLES.WAREHOUSE_STAFF
+  ),
+  inboundOrderController.getInboundById
+);
+
 export default router;
