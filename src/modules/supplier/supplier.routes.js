@@ -5,6 +5,16 @@ import { ROLES } from "../../constant/role.constant.js";
 import { validateSchema } from "../main.middleware.js";
 import { createSupplier } from "./supplier.schema.js";
 const router = express.Router();
+
+router.get(
+  "/all",
+  authenticationMiddleware.verifyToken,
+  authenticationMiddleware.allowRoles(
+    ROLES.WAREHOUSE_MANAGER,
+    ROLES.WAREHOUSE_STAFF
+  ),
+  supplierController.getAllSuppliers
+);
 // @route   GET /api/v1/suppliers
 router.get(
   "/",
@@ -69,4 +79,5 @@ router.put(
   authenticationMiddleware.allowRoles(ROLES.WAREHOUSE_MANAGER),
   supplierController.rejectSupplier
 );
+
 export default router;

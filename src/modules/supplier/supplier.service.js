@@ -7,6 +7,23 @@ import { ACTION } from "../../constant/action.constant.js";
 import SupplierLog from "../supplier/supplierLog.model.js";
 import { requestType } from "../../constant/requestType.constant.js";
 
+// lấy ALL supplier
+const getAllSuppliers = async (page = 1) => {
+  const skip = (page - 1) * PAGE_SIZE;
+  const [data, total] = await Promise.all([
+    Supplier.find().populate("approveBy").skip(skip).limit(PAGE_SIZE),
+    Supplier.countDocuments(),
+  ]);
+
+  return {
+    data,
+    total,
+    page,
+    pageSize: PAGE_SIZE,
+    totalPages: Math.ceil(total / PAGE_SIZE),
+  };
+};
+
 // danh sách nhà cung cấp trạng thái đã được approve và trạng thái active
 const getListSuppliers = async (page) => {
   const skip = (page - 1) * PAGE_SIZE;
@@ -306,4 +323,5 @@ export default {
   updateSupplier,
   approveSupplier,
   rejectSupplier,
+  getAllSuppliers,
 };
