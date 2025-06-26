@@ -46,12 +46,12 @@ router.put(
 );
 
 // @route   POST /api/v1/categories/:id/status
-// router.post(
-//   "/:id/status",
-//   authenticationMiddleware.verifyToken,
-//   authenticationMiddleware.verifyRole(ROLES.WAREHOUSE_MANAGER),
-//   categoryController.changeCategoryStatus
-// );
+router.put(
+  "/:id/status",
+  authenticationMiddleware.verifyToken,
+  authenticationMiddleware.verifyRole(ROLES.WAREHOUSE_STAFF),
+  categoryController.changeCategoryStatus
+);
 
 router.put(
   "/approve/:id",
