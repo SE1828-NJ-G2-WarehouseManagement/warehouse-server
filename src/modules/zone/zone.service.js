@@ -4,6 +4,22 @@ import { STATUS } from "../../constant/status.constant.js";
 import { ROLES } from "../../constant/role.constant.js";
 import User from "../user/user.model.js";
 import Warehouse from "../warehouse/warehouse.model.js";
+
+
+const getZoneWithoutPagination = async (user) => {
+  // Lấy user theo email
+  const userCurrent = await User.findOne({ email: user.email });
+  if (!userCurrent) {
+    throw new Error("User not found");
+  }
+  // Lấy zone theo assignedWarehouse
+  const zones = await Zone.find({ warehouseId: userCurrent.assignedWarehouse });
+  if (!zones || zones.length === 0) {
+    throw new Error("No zones found for this warehouse");
+  }
+  return zones;
+};
+
 // Warehouse Manager and Staff can only view zones of their assigned warehouse
 const getZones = async (user, page) => {
   const skip = (page - 1) * PAGE_SIZE;
@@ -251,4 +267,5 @@ export default {
   createZone,
   updateZone,
   changeStatusZone,
+  getZoneWithoutPagination,
 };
