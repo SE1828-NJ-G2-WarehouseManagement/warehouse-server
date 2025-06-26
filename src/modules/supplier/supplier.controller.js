@@ -89,9 +89,9 @@ export const rejectSupplier = async (req, res) => {
   }
 };
 
-export const getAllSuppliers = async (req, res) => {
+export const getAllSuppliersActive = async (req, res) => {
   try {
-    const suppliers = await supplierService.getAllSuppliers();
+    const suppliers = await supplierService.getAllSuppliersActive();
     res.status(200).json(suppliers);
   } catch (error) {
     res.status(500).json({ message: error.message });

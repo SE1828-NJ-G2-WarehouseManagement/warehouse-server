@@ -13,7 +13,7 @@ router.get(
     ROLES.WAREHOUSE_MANAGER,
     ROLES.WAREHOUSE_STAFF
   ),
-  supplierController.getAllSuppliers
+  supplierController.getAllSuppliersActive
 );
 // @route   GET /api/v1/suppliers
 router.get(
