@@ -99,3 +99,15 @@ export const changeStatusZone = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+export const getZoneWithoutPagination = async (req, res) => {
+  try {
+    const zones = await zoneService.getZoneWithoutPagination(req.user);
+    res.status(200).json(zones);
+  } catch (error) {
+    if (error.message === "User not found") {
+      return res.status(404).json({ message: error.message });
+    }
+    res.status(500).json({ message: error.message });
+  }
+};

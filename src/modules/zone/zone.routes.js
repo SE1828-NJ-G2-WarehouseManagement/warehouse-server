@@ -8,6 +8,11 @@ const router = express.Router();
 import { validateSchema } from "../main.middleware.js";
 import { createZone, updateZone } from "./zone.schema.js";
 
+router.get(
+  "/without-pagination",
+  authenticationMiddleware.verifyToken,
+  zoneController.getZoneWithoutPagination
+);
 router.get("/", authenticationMiddleware.verifyToken, zoneController.getZones);
 router.get(
   "/capacity",
