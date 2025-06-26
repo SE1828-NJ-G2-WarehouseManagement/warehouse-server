@@ -101,7 +101,7 @@ export const updateCategory = async (req, res) => {
 
 export const changeCategoryStatus = async (req, res) => {
   try {
-    const { status } = req.body;
+    const { newAction } = req.body;
     const id = req.params.id;
     let userId;
 
@@ -120,7 +120,7 @@ export const changeCategoryStatus = async (req, res) => {
     console.log("Final userId:", userId);
     const updatedCategory = await categoryService.changeCategoryStatus(
       id,
-      status,
+      newAction,
       userId
     );
     res.status(200).json(updatedCategory);

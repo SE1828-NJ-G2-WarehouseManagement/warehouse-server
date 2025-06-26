@@ -13,6 +13,9 @@ const createCategory = async (data, userId) => {
   const category = new Category({
     ...data,
     status: STATUS.PENDING,
+    action: ACTION.INACTIVE,
+    requestType: "CREATE",
+    pendingChanges: null,
     createdBy: userId,
     updatedBy: userId,
   });
@@ -43,7 +46,7 @@ const getCategoryById = async (id) => {
     throw new Error("Invalid category ID");
   }
   const category = await Category.findById(id).populate("createdBy", "firstName lastName phone _id")
-  .populate("updatedBy", "firstName lastName phone _id");
+  .populate("updatedBy", "firstName lastName phone _id").populate("approveBy", "firstName lastName phone _id");
   if (!category) {
     throw new Error("Category not found");
   }
@@ -68,66 +71,93 @@ const updateCategory = async (id, data, userId) => {
     if (existOther) {
       throw new Error("Category name already exists");
     }
-
     if (currentCategory.name === data.name) {
       throw new Error("Category name already exists");
     }
+    const existPending = await Category.findOne({
+      "pendingChanges.name": data.name,
+      _id: { $ne: id },
+    });
+    if (existPending) {
+      throw new Error("Category name is pending approval");
+    }
   }
 
-  // if (data.reason && currentCategory.reason === data.reason) {
-  //   throw new Error("Category reason already exists");
-  // }
-
-  const updateData = {
-    ...data,
-    status: STATUS.PENDING,
-    approveBy: null, 
-    updatedBy: userId,
+  currentCategory.requestType = "UPDATE";
+  currentCategory.pendingChanges = {
+    ...(data.name && { name: data.name }),
+    ...(data.status && { status: data.status }),
+    ...(data.action && { action: data.action }),
   };
+  currentCategory.updatedBy = userId;
+  await currentCategory.save();
 
-  console.log("Update data with userId:", updateData);
-
-  const category = await Category.findByIdAndUpdate(id, updateData, {
-    new: true,
-  })
+  return await Category.findById(id)
     .populate("createdBy", "firstName lastName phone _id")
-    .populate("updatedBy", "firstName lastName phone _id");
-
-  return category;
+    .populate("updatedBy", "firstName lastName phone _id")
+    .populate("approveBy", "firstName lastName phone _id");
 };
 
-const changeCategoryStatus = async (id, newStatus, userId) => {
+const changeCategoryStatus = async (id, newAction, userId) => {
   if (!mongoose.Types.ObjectId.isValid(id)) {
     throw new Error("Invalid category ID");
   }
-  const category = await Category.findById(id);
+  const category = await Category.findById(id)
+    .populate("createdBy", "firstName lastName phone _id")
+    .populate("updatedBy", "firstName lastName phone _id")
+    .populate("approveBy", "firstName lastName phone _id");
   if (!category) {
     throw new Error("Category not found");
   }
 
-  const currentStatus = category.status;
+  if (category.status === STATUS.PENDING) {
+    throw new Error("Cannot change action while category is pending approval.");
+  }
 
   if (
-    (currentStatus === "PENDING" &&
-      (newStatus === "ACTIVE" || newStatus === "INACTIVE")) ||
-    (currentStatus === "ACTIVE" && newStatus === "INACTIVE") ||
-    (currentStatus === "INACTIVE" && newStatus === "PENDING")
+    (category.action === ACTION.ACTIVE && newAction === ACTION.INACTIVE) ||
+    (category.action === ACTION.INACTIVE && newAction === ACTION.ACTIVE)
   ) {
-    category.status = newStatus;
-    category.approveBy = userId;
-    return await category.save();
+    category.pendingChanges = { action: newAction };
+    category.status = STATUS.PENDING;
+    category.requestType = "STATUS_CHANGE";
+    category.updatedBy = userId;
+    await category.save();
+    return category;
   } else {
-    throw new Error("Invalid status transition");
+    throw new Error("Invalid action transition");
   }
 };
 
 const approveCategory = async (id, userId) => {
   if (!mongoose.Types.ObjectId.isValid(id))
     throw new Error("Invalid category ID");
-  const category = await Category.findById(id);
+  const category = await Category.findById(id)
+    .populate("createdBy", "firstName lastName phone _id")
+    .populate("updatedBy", "firstName lastName phone _id");
   if (!category) throw new Error("Category not found");
   if (category.status !== STATUS.PENDING)
     throw new Error("Only pending categories can be approved");
+
+  if (
+    category.requestType === "UPDATE" ||
+    category.requestType === "STATUS_CHANGE"
+  ) {
+    if (category.pendingChanges) {
+      if (category.pendingChanges.name)
+        category.name = category.pendingChanges.name;
+      if (category.pendingChanges.status)
+        category.status = category.pendingChanges.status;
+      if (category.pendingChanges.action)
+        category.action = category.pendingChanges.action;
+    }
+    category.status = STATUS.APPROVED;
+    category.pendingChanges = null;
+    category.requestType = null;
+    category.approveBy = userId;
+    await category.save();
+    return category;
+  }
 
   category.status = STATUS.APPROVED;
   category.action = ACTION.ACTIVE;
@@ -139,10 +169,25 @@ const approveCategory = async (id, userId) => {
 const rejectCategory = async (id, userId, note) => {
   if (!mongoose.Types.ObjectId.isValid(id))
     throw new Error("Invalid category ID");
-  const category = await Category.findById(id);
+  const category = await Category.findById(id)
+    .populate("createdBy", "firstName lastName phone _id")
+    .populate("updatedBy", "firstName lastName phone _id");
   if (!category) throw new Error("Category not found");
   if (category.status !== STATUS.PENDING)
     throw new Error("Only pending categories can be rejected");
+
+  if (
+    category.requestType === "UPDATE" ||
+    category.requestType === "STATUS_CHANGE"
+  ) {
+    category.pendingChanges = null;
+    category.requestType = null;
+    category.status = STATUS.APPROVED; 
+    category.rejectedNote = note;
+    category.approveBy = userId;
+    await category.save();
+    return category;
+  }
 
   category.status = STATUS.REJECTED;
   category.action = ACTION.INACTIVE;

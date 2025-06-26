@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import { Schema } from "mongoose";
 import { STATUS } from "../../constant/status.constant.js";
 import { ACTION } from "../../constant/action.constant.js";
+import { requestType } from "../../constant/requestType.constant.js";
 
 const categorySchema = new Schema(
   {
@@ -31,6 +32,16 @@ const categorySchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: "User",
       default: null,
+    },
+    requestType: {
+      type: String,
+      enum: [requestType.CREATE, requestType.STATUS_CHANGE, requestType.UPDATE],
+      default: null,
+    },
+    pendingChanges: {
+      name: String,
+      status: String,
+      action: String,
     },
   },
   { timestamps: true }
