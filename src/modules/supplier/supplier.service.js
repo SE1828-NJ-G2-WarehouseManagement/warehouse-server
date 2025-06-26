@@ -22,11 +22,8 @@ const getAllSuppliersActive = async () => {
 const getListSuppliers = async (page) => {
   const skip = (page - 1) * PAGE_SIZE;
   const [data, total] = await Promise.all([
-    Supplier.find({ status: STATUS.APPROVED, action: ACTION.ACTIVE })
-      .populate("approveBy")
-      .skip(skip)
-      .limit(PAGE_SIZE),
-    Supplier.countDocuments({ status: STATUS.APPROVED, action: ACTION.ACTIVE }),
+    Supplier.find({}).populate("approveBy").skip(skip).limit(PAGE_SIZE),
+    Supplier.countDocuments({}),
   ]);
   return {
     data,

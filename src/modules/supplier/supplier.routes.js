@@ -7,7 +7,7 @@ import { createSupplier } from "./supplier.schema.js";
 const router = express.Router();
 
 router.get(
-  "/all",
+  "/all-active",
   authenticationMiddleware.verifyToken,
   authenticationMiddleware.allowRoles(
     ROLES.WAREHOUSE_MANAGER,
