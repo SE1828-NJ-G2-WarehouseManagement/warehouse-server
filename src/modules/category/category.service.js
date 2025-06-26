@@ -2,6 +2,8 @@ import Category from "./category.model.js";
 import mongoose from "mongoose";
 import PAGE_SIZE from "../../constant/pageSize.constant.js";
 import { STATUS } from "../../constant/status.constant.js";
+import { ACTION } from "../../constant/action.constant.js";
+
 
 const createCategory = async (data, userId) => {
   const exist = await Category.findOne({ name: data.name });
@@ -119,10 +121,43 @@ const changeCategoryStatus = async (id, newStatus, userId) => {
   }
 };
 
+const approveCategory = async (id, userId) => {
+  if (!mongoose.Types.ObjectId.isValid(id))
+    throw new Error("Invalid category ID");
+  const category = await Category.findById(id);
+  if (!category) throw new Error("Category not found");
+  if (category.status !== STATUS.PENDING)
+    throw new Error("Only pending categories can be approved");
+
+  category.status = STATUS.APPROVED;
+  category.action = ACTION.ACTIVE;
+  category.approveBy = userId;
+  await category.save();
+  return category;
+};
+
+const rejectCategory = async (id, userId, note) => {
+  if (!mongoose.Types.ObjectId.isValid(id))
+    throw new Error("Invalid category ID");
+  const category = await Category.findById(id);
+  if (!category) throw new Error("Category not found");
+  if (category.status !== STATUS.PENDING)
+    throw new Error("Only pending categories can be rejected");
+
+  category.status = STATUS.REJECTED;
+  category.action = ACTION.INACTIVE;
+  category.rejectedNote = note;
+  category.approveBy = userId;
+  await category.save();
+  return category;
+};
+
 export default {
   createCategory,
   getCategories,
   getCategoryById,
   updateCategory,
   changeCategoryStatus,
+  approveCategory,
+  rejectCategory,
 };

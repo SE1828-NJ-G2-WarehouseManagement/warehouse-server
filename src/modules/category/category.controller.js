@@ -137,3 +137,44 @@ export const changeCategoryStatus = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+export const approveCategory = async (req, res) => {
+  try {
+    const id = req.params.id;
+    let userId;
+    if (req.user._id) {
+      userId = req.user._id;
+    } else if (req.user.email) {
+      const user = await User.findOne({ email: req.user.email });
+      if (!user) return res.status(401).json({ message: "User not found" });
+      userId = user._id;
+    } else {
+      return res.status(400).json({ message: "User ID not found in token" });
+    }
+    const category = await categoryService.approveCategory(id, userId);
+    res.status(200).json(category);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const rejectCategory = async (req, res) => {
+  try {
+    const id = req.params.id;
+    const note = req.body.note;
+    let userId;
+    if (req.user._id) {
+      userId = req.user._id;
+    } else if (req.user.email) {
+      const user = await User.findOne({ email: req.user.email });
+      if (!user) return res.status(401).json({ message: "User not found" });
+      userId = user._id;
+    } else {
+      return res.status(400).json({ message: "User ID not found in token" });
+    }
+    const category = await categoryService.rejectCategory(id, userId, note);
+    res.status(200).json(category);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};

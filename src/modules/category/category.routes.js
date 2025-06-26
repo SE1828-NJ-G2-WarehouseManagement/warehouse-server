@@ -40,11 +40,26 @@ router.put(
 );
 
 // @route   POST /api/v1/categories/:id/status
-router.post(
-  "/:id/status",
+// router.post(
+//   "/:id/status",
+//   authenticationMiddleware.verifyToken,
+//   authenticationMiddleware.verifyRole(ROLES.WAREHOUSE_MANAGER),
+//   categoryController.changeCategoryStatus
+// );
+
+router.put(
+  "/approve/:id",
   authenticationMiddleware.verifyToken,
   authenticationMiddleware.verifyRole(ROLES.WAREHOUSE_MANAGER),
-  categoryController.changeCategoryStatus
+  categoryController.approveCategory
+);
+
+// @route   PUT /api/v1/categories/reject/:id
+router.put(
+  "/reject/:id",
+  authenticationMiddleware.verifyToken,
+  authenticationMiddleware.verifyRole(ROLES.WAREHOUSE_MANAGER),
+  categoryController.rejectCategory
 );
 
 export default router;
