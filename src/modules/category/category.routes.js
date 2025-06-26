@@ -14,6 +14,12 @@ router.get(
   categoryController.getCategories
 );
 
+router.get(
+  "/active",
+  authenticationMiddleware.verifyToken,
+  categoryController.getActiveCategories
+);
+
 // @route   GET /api/v1/categories/:id
 router.get(
   "/:id",
@@ -61,5 +67,7 @@ router.put(
   authenticationMiddleware.verifyRole(ROLES.WAREHOUSE_MANAGER),
   categoryController.rejectCategory
 );
+
+
 
 export default router;

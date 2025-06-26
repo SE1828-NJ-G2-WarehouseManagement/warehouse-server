@@ -178,3 +178,12 @@ export const rejectCategory = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+export const getActiveCategories = async (req, res) => {
+  try {
+    const categories = await categoryService.getActiveCategories();
+    res.status(200).json(categories);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};

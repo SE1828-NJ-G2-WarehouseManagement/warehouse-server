@@ -14,6 +14,12 @@ router.get(
   productController.getProducts
 );
 
+router.get(
+  "/active",
+  authenticationMiddleware.verifyToken,
+  productController.getActiveProducts
+);
+
 // @route   GET /api/v1/products/:id
 router.get(
   "/:id",
@@ -46,5 +52,7 @@ router.post(
   authenticationMiddleware.verifyRole(ROLES.WAREHOUSE_MANAGER),
   productController.changeProductStatus
 );
+
+
 
 export default router;

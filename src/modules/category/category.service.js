@@ -152,6 +152,10 @@ const rejectCategory = async (id, userId, note) => {
   return category;
 };
 
+const getActiveCategories = async () => {
+  return await Category.find({ action: ACTION.ACTIVE });
+};
+
 export default {
   createCategory,
   getCategories,
@@ -160,4 +164,5 @@ export default {
   changeCategoryStatus,
   approveCategory,
   rejectCategory,
+  getActiveCategories,
 };
