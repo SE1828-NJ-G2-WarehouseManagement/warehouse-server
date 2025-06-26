@@ -8,20 +8,14 @@ import SupplierLog from "../supplier/supplierLog.model.js";
 import { requestType } from "../../constant/requestType.constant.js";
 
 // lấy ALL supplier
-const getAllSuppliers = async (page = 1) => {
-  const skip = (page - 1) * PAGE_SIZE;
-  const [data, total] = await Promise.all([
-    Supplier.find().populate("approveBy").skip(skip).limit(PAGE_SIZE),
-    Supplier.countDocuments(),
-  ]);
-
-  return {
-    data,
-    total,
-    page,
-    pageSize: PAGE_SIZE,
-    totalPages: Math.ceil(total / PAGE_SIZE),
-  };
+const getAllSuppliersActive = async () => {
+  const listSupplierActive = Supplier.find({ action: ACTION.ACTIVE }).populate(
+    "approveBy"
+  );
+  if (!listSupplierActive) {
+    throw new Error("No active suppliers found");
+  }
+  return listSupplierActive;
 };
 
 // danh sách nhà cung cấp trạng thái đã được approve và trạng thái active
@@ -323,5 +317,5 @@ export default {
   updateSupplier,
   approveSupplier,
   rejectSupplier,
-  getAllSuppliers,
+  getAllSuppliersActive,
 };
