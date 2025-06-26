@@ -1,8 +1,7 @@
 import mongoose from "mongoose";
 import { Schema } from "mongoose";
 import { STATUS } from "../../constant/status.constant.js";
-import User from "../user/user.model.js";
-import Category from "../category/category.model.js";
+import { ACTION } from "../../constant/action.constant.js";
 
 const productSchema = new Schema(
   {
@@ -11,19 +10,24 @@ const productSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: "Category",
       required: true,
-    },  
+    },
     storageTemperature: {
-      min:{ type: Number, required: true },
-      max:{ type: Number, required: true },
+      min: { type: Number, required: true },
+      max: { type: Number, required: true },
     },
     density: { type: Number },
     image: { type: String },
     status: {
       type: String,
-      enum: [STATUS.ACTIVE, STATUS.INACTIVE, STATUS.PENDING, STATUS.REJECTED],
-      default: STATUS.ACTIVE,
+      enum: [STATUS.PENDING, STATUS.APPROVED, STATUS.REJECTED],
+      default: STATUS.PENDING,
     },
-    reason: { type: String },
+    action: {
+      type: String,
+      enum: [ACTION.ACTIVE, ACTION.INACTIVE],
+      default: ACTION.INACTIVE,
+    },
+    rejectedNote: { type: String, default: null },
     createdBy: {
       type: Schema.Types.ObjectId,
       ref: "User",

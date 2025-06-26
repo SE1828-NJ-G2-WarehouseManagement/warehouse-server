@@ -111,10 +111,18 @@ const changeProductStatus = async (id, newStatus, userId) => {
   }
 };
 
+const getActiveProducts = async () => {
+  return await Product.find({ action: "ACTIVE" })
+    .populate("category", "name action _id")
+    .populate("createdBy", "email role _id")
+    .populate("updatedBy", "email role _id");
+};
+
 export default {
   createProduct,
   getProducts,
   getProductById,
   updateProduct,
   changeProductStatus,
+  getActiveProducts,
 };
