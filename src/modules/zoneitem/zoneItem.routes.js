@@ -16,4 +16,11 @@ router.post(
   validateSchema(transferBetweenZone),
   zoneItemController.transferBetweenZone
 );
+
+router.get(
+  "/products/active-in-zones",
+  authenticationMiddleware.verifyToken,
+  zoneItemController.getAllActiveProductsInZones
+);
+
 export default router;

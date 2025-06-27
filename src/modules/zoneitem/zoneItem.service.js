@@ -166,7 +166,36 @@ const transferBetweenZone = async (
   };
 };
 
+
+const getAllActiveProductsInZones = async () => {
+  const zoneItems = await ZoneItem.find().populate({
+    path: "itemId",
+    populate: {
+      path: "productId",
+      model: "Product",
+      match: { action: "ACTIVE" }, 
+    },
+  });
+
+  const products = [];
+  const productIds = new Set();
+
+  zoneItems.forEach((zoneItem) => {
+    const item = zoneItem.itemId;
+    if (item && item.productId && item.productId.action === "ACTIVE") {
+      const prod = item.productId;
+      if (!productIds.has(prod._id.toString())) {
+        products.push(prod);
+        productIds.add(prod._id.toString());
+      }
+    }
+  });
+
+  return products;
+};
+
 export default {
   getItemByZoneId,
   transferBetweenZone,
+  getAllActiveProductsInZones,
 };
