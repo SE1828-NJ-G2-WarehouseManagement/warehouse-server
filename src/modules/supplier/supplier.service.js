@@ -34,6 +34,30 @@ const getListSuppliers = async (page) => {
   };
 };
 
+const getAllSuppliers = async (page) => {
+  const skip = (page - 1) * PAGE_SIZE;
+
+  const [data, total] = await Promise.all([
+    SupplierLog.find()
+      .populate("supplierId")
+      .populate("approveBy")
+      .populate("createdBy")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(PAGE_SIZE),
+    SupplierLog.countDocuments(),
+  ]);
+
+  return {
+    data,
+    total,
+    page,
+    pageSize: PAGE_SIZE,
+    totalPages: Math.ceil(total / PAGE_SIZE),
+  };
+};
+
+
 // danh sách nhà cung cấp trạng thái đang chờ duyệt và trạng thái inactive
 // Thêm field requestType để phân biệt CREATE và UPDATE
 
@@ -315,4 +339,5 @@ export default {
   approveSupplier,
   rejectSupplier,
   getAllSuppliersActive,
+  getAllSuppliers
 };
