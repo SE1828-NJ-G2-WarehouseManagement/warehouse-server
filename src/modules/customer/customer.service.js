@@ -98,7 +98,7 @@ export const getAllCustomersService = async ({ page = 1, status }) => {
 
 // GET ALL with no pagination
 export const getAllCustomersNoPaginationService = async () => {
-    const customers = await Customer.find({});
+    const customers = await Customer.find({status: STATUS.ACTIVE});
     return customers;
 };
 
