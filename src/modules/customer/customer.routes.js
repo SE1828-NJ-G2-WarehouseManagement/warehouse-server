@@ -6,7 +6,8 @@ import {
   getAllCustomersController,
   searchCustomersController,
   filterCustomersByStatusController,
-  changeCustomerStatusController
+  changeCustomerStatusController,
+  getAllCustomersNoPaginationController
 } from "./customer.controller.js";
 
 import {
@@ -37,6 +38,15 @@ router.get(
   authenticationMiddleware.verifyToken,
   authenticationMiddleware.allowRoles(ROLES.WAREHOUSE_STAFF),
   getAllCustomersController
+);
+
+// @route   GET /api/v1/customers/all
+// @desc    Get all customers with no pagination
+router.get(
+  "/all",
+  authenticationMiddleware.verifyToken,
+  authenticationMiddleware.allowRoles(ROLES.WAREHOUSE_STAFF),
+  getAllCustomersNoPaginationController
 );
 
 // @route   GET /api/v1/customers/search
@@ -76,7 +86,7 @@ router.put(
   updateCustomerController
 );
 
-// @route   POST /api/v1/customers/:id/status
+// @route   PATCH /api/v1/customers/:id/status
 // @desc    Change customer status by ID
 router.patch(
   "/:id/status",

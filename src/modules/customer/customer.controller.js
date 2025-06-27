@@ -5,7 +5,8 @@ import {
   getAllCustomersService,
   searchCustomersService,
   filterCustomersByStatusService,
-  changeCustomerStatusService
+  changeCustomerStatusService,
+  getAllCustomersNoPaginationService
 } from "./customer.service.js";
 
 // Create
@@ -44,6 +45,16 @@ export const getAllCustomersController = async (req, res) => {
     const { page = 1, status } = req.query;
     const result = await getAllCustomersService({ page, status });
     res.status(200).json(result);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+// Get all customers with no pagination
+export const getAllCustomersNoPaginationController = async (req, res) => {
+  try {
+    const customers = await getAllCustomersNoPaginationService();
+    res.status(200).json(customers);
   } catch (error) {
     res.status(400).json({ message: error.message });
   }

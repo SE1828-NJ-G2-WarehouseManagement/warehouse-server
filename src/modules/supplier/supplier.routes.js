@@ -26,6 +26,17 @@ router.get(
   supplierController.getListSuppliers
 );
 
+// @route   GET /api/v1/suppliers/all
+router.get(
+  "/all",
+  authenticationMiddleware.verifyToken,
+  authenticationMiddleware.allowRoles(
+    ROLES.WAREHOUSE_MANAGER,
+    ROLES.WAREHOUSE_STAFF
+  ),
+  supplierController.getAllSuppliers
+);
+
 // @route   GET /api/v1/suppliers/pending
 router.get(
   "/pending",

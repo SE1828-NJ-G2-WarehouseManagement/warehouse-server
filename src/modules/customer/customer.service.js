@@ -5,16 +5,10 @@ import mongoose from "mongoose";
 
 // CREATE
 export const createCustomerService = async (data) => {
-    const nameExist = await Customer.findOne({ name: data.name });
-    if (nameExist) {
-        throw new Error("Customer name already exists");
-    }
-
     const phoneExist = await Customer.findOne({ phone: data.phone });
     if (phoneExist) {
         throw new Error("Customer phone already exists");
     }
-
     const newCustomer = await Customer.create(data);
     return newCustomer;
 };
@@ -100,6 +94,12 @@ export const getAllCustomersService = async ({ page = 1, status }) => {
         pageSize: PAGE_SIZE,
         totalPages: Math.ceil(total / PAGE_SIZE),
     };
+};
+
+// GET ALL with no pagination
+export const getAllCustomersNoPaginationService = async () => {
+    const customers = await Customer.find({});
+    return customers;
 };
 
 // GET ACTIVE LIST
