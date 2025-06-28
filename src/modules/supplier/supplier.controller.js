@@ -107,3 +107,15 @@ export const getAllSuppliersActive = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+export const getPendingLogBySupplierId = async (req, res) => {
+  try {
+    const supplierId = req.params.id;
+    const pendingLogs = await supplierService.getPendingLogBySupplierId(
+      supplierId
+    );
+    res.status(200).json(pendingLogs);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
