@@ -101,4 +101,12 @@ router.get(
   supplierController.getPendingLogBySupplierId
 );
 
+// @route   PATCH /api/v1/suppliers/:id
+router.patch(
+  "/:id",
+  authenticationMiddleware.verifyToken,
+  authenticationMiddleware.allowRoles(ROLES.WAREHOUSE_MANAGER),
+  supplierController.updateSupplierStatus
+);
+
 export default router;
