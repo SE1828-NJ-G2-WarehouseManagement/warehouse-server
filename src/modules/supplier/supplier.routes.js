@@ -90,5 +90,15 @@ router.put(
   authenticationMiddleware.allowRoles(ROLES.WAREHOUSE_MANAGER),
   supplierController.rejectSupplier
 );
+// @route   GET /api/v1/suppliers/pending-log/:id
+router.get(
+  "/pending-log/:id",
+  authenticationMiddleware.verifyToken,
+  authenticationMiddleware.allowRoles(
+    ROLES.WAREHOUSE_MANAGER,
+    ROLES.WAREHOUSE_STAFF
+  ),
+  supplierController.getPendingLogBySupplierId
+);
 
 export default router;

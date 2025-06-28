@@ -7,6 +7,57 @@ import { ACTION } from "../../constant/action.constant.js";
 import SupplierLog from "../supplier/supplierLog.model.js";
 import { requestType } from "../../constant/requestType.constant.js";
 
+const getPendingLogBySupplierId = async (supplierId) => {
+  if (!mongoose.Types.ObjectId.isValid(supplierId)) {
+    throw new Error("Invalid supplier ID");
+  }
+
+  // Tìm log đang chờ duyệt tương ứng với supplier
+  const log = await SupplierLog.findOne({
+    supplierId,
+    status: STATUS.PENDING,
+    action: ACTION.INACTIVE,
+  })
+    .populate("supplierId")
+    .populate("approveBy")
+    .populate("createdBy");
+
+  if (!log) {
+    throw new Error("No pending log found for this supplier");
+  }
+
+  const requestType = log.requestType || log.type;
+  const logObject = log.toObject();
+
+  if (requestType === "UPDATE" && log.supplierId) {
+    const changes = {};
+    const current = log.supplierId;
+
+    if (log.name !== current.name)
+      changes.name = { old: current.name, new: log.name };
+    if (log.phone !== current.phone)
+      changes.phone = { old: current.phone, new: log.phone };
+    if (log.email !== current.email)
+      changes.email = { old: current.email, new: log.email };
+    if (log.address !== current.address)
+      changes.address = { old: current.address, new: log.address };
+    if (log.taxId !== current.taxId)
+      changes.taxId = { old: current.taxId, new: log.taxId };
+
+    return {
+      ...logObject,
+      requestType,
+      changedFields: Object.keys(changes).length > 0 ? changes : undefined,
+    };
+  }
+
+  // CREATE request
+  return {
+    ...logObject,
+    requestType,
+  };
+};
+
 // lấy ALL supplier
 const getAllSuppliersActive = async () => {
   const listSupplierActive = Supplier.find({ action: ACTION.ACTIVE }).populate(
@@ -38,14 +89,12 @@ const getAllSuppliers = async (page) => {
   const skip = (page - 1) * PAGE_SIZE;
 
   const [data, total] = await Promise.all([
-    SupplierLog.find()
-      .populate("supplierId")
+    Supplier.find()
       .populate("approveBy")
-      .populate("createdBy")
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(PAGE_SIZE),
-    SupplierLog.countDocuments(),
+    Supplier.countDocuments(),
   ]);
 
   return {
@@ -339,5 +388,6 @@ export default {
   approveSupplier,
   rejectSupplier,
   getAllSuppliersActive,
-  getAllSuppliers
+  getAllSuppliers,
+  getPendingLogBySupplierId,
 };
