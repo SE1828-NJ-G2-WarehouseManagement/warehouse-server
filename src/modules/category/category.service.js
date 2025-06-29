@@ -28,6 +28,9 @@ const getCategories = async (page = 1) => {
     Category.find()
       .populate("createdBy", "firstName lastName phone _id")
       .populate("updatedBy", "firstName lastName phone _id")
+      .sort({ 
+        status: 1 
+      })
       .skip(skip)
       .limit(PAGE_SIZE),
     Category.countDocuments({}),
@@ -40,6 +43,26 @@ const getCategories = async (page = 1) => {
     totalPages: Math.ceil(total / PAGE_SIZE),
   };
 };
+
+const filterCategoriesByName = async (name, page = 1) => {
+  const skip = (page - 1) * PAGE_SIZE;
+  const [data, total] = await Promise.all([
+    Category.find({ name: new RegExp(name, "i") })
+      .populate("createdBy", "firstName lastName phone _id")
+      .populate("updatedBy", "firstName lastName phone _id")
+      .sort({ status: 1 })
+      .skip(skip)
+      .limit(PAGE_SIZE),
+    Category.countDocuments({ name: new RegExp(name, "i") }),
+  ]);
+  return {
+    data,
+    total,
+    page,
+    pageSize: PAGE_SIZE,
+    totalPages: Math.ceil(total / PAGE_SIZE),
+  };
+}
 
 const getCategoryById = async (id) => {
   if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -84,6 +107,7 @@ const updateCategory = async (id, data, userId) => {
   }
 
   currentCategory.requestType = "UPDATE";
+  currentCategory.status = STATUS.PENDING;
   currentCategory.pendingChanges = {
     ...(data.name && { name: data.name }),
     ...(data.status && { status: data.status }),
@@ -210,4 +234,5 @@ export default {
   approveCategory,
   rejectCategory,
   getActiveCategories,
+  filterCategoriesByName
 };

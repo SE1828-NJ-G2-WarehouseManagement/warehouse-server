@@ -187,3 +187,16 @@ export const getActiveCategories = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+export const filterCategoriesByName = async (req, res) => {
+  try {
+    const { name } = req.query;
+    if (!name) {
+      return res.status(400).json({ message: "Name query parameter is required" });
+    }
+    const categories = await categoryService.filterCategoriesByName(name);
+    res.status(200).json(categories);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+}

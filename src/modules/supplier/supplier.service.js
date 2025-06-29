@@ -379,6 +379,26 @@ const rejectSupplier = async (logId, user, note) => {
   return log;
 };
 
+const updateSupplierStatus = async (id, action) => {
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    throw new Error("Invalid supplier ID");
+  }
+
+  const supplier = await Supplier.findById(id);
+  if (!supplier) {
+    throw new Error("Supplier not found");
+  }
+
+  if (action !== ACTION.ACTIVE && action !== ACTION.INACTIVE) {
+    throw new Error("Invalid action. Must be ACTIVE or INACTIVE.");
+  }
+
+  supplier.action = action;
+  await supplier.save();
+
+  return supplier;
+}
+
 export default {
   getListSuppliers,
   getListSuppliersPending,
@@ -390,4 +410,5 @@ export default {
   getAllSuppliersActive,
   getAllSuppliers,
   getPendingLogBySupplierId,
+  updateSupplierStatus
 };

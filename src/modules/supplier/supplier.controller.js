@@ -119,3 +119,17 @@ export const getPendingLogBySupplierId = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+export const updateSupplierStatus = async (req, res) => {
+  try {
+    const supplierId = req.params.id;
+    const { status } = req.body; 
+    const updatedSupplier = await supplierService.updateSupplierStatus(
+      supplierId,
+      status,
+      req.user
+    );
+    res.status(200).json(updatedSupplier);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+}
