@@ -109,4 +109,12 @@ router.patch(
   supplierController.updateSupplierStatus
 );
 
+// @route   PUT /api/v1/suppliers/request-change-action/:id
+router.put(
+  "/request-change-action/:id",
+  authenticationMiddleware.verifyToken,
+  authenticationMiddleware.allowRoles(ROLES.WAREHOUSE_STAFF),
+  supplierController.requestChangeAction
+);
+
 export default router;

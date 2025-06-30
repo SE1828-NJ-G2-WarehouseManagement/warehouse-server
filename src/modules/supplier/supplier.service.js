@@ -18,6 +18,7 @@ const getPendingLogBySupplierId = async (supplierId) => {
     status: STATUS.PENDING,
     action: ACTION.INACTIVE,
   })
+    .sort({ createdAt: -1 })
     .populate("supplierId")
     .populate("approveBy")
     .populate("createdBy");
@@ -48,6 +49,21 @@ const getPendingLogBySupplierId = async (supplierId) => {
       ...logObject,
       requestType,
       changedFields: Object.keys(changes).length > 0 ? changes : undefined,
+    };
+  }
+  // Handle STATUS_CHANGE
+  if (requestType === "STATUS_CHANGE" && log.supplierId) {
+    const changes = {
+      action: {
+        old: log.oldAction, // giá trị hiện tại của supplier
+        new: log.newAction || log.action, // giá trị sắp được đổi sang
+      },
+    };
+
+    return {
+      ...logObject,
+      requestType,
+      changedFields: changes,
     };
   }
 
@@ -340,6 +356,14 @@ const approveSupplier = async (logId, user) => {
       action: ACTION.ACTIVE,
       approveBy: userCurrent._id,
     });
+  }
+  // Handle STATUS_CHANGE request
+  else if (log.requestType === requestType.STATUS_CHANGE && log.supplierId) {
+    await Supplier.findByIdAndUpdate(log.supplierId, {
+      action: log.newAction,
+      status: STATUS.APPROVED,
+      approveBy: userCurrent._id,
+    });
   } else {
     throw new Error("Invalid log type or missing supplier reference");
   }
@@ -363,21 +387,43 @@ const rejectSupplier = async (logId, user, note) => {
   }
 
   const userCurrent = await User.findOne({ email: user.email });
+  if (!userCurrent) {
+    throw new Error("User not found");
+  }
 
+  // Cập nhật trạng thái log bị từ chối
   log.status = STATUS.REJECTED;
   log.action = ACTION.INACTIVE;
   log.rejectedNote = note;
   log.approveBy = userCurrent._id;
   await log.save();
 
-  await Supplier.findByIdAndUpdate(log.supplierId, {
-    status: STATUS.REJECTED,
-    action: ACTION.INACTIVE,
-    approveBy: userCurrent._id,
-  });
+  const supplier = await Supplier.findById(log.supplierId);
+
+  if (log.requestType === requestType.CREATE) {
+    // Với CREATE → supplier bị từ chối luôn
+    if (supplier) {
+      supplier.status = STATUS.REJECTED;
+      supplier.action = ACTION.INACTIVE;
+      supplier.approveBy = userCurrent._id;
+      await supplier.save();
+    }
+  } else if (
+    log.requestType === requestType.UPDATE ||
+    log.requestType === requestType.STATUS_CHANGE
+  ) {
+    // Với UPDATE hoặc STATUS_CHANGE → khôi phục lại trạng thái ban đầu (APPROVED + ACTIVE)
+    if (supplier) {
+      supplier.status = STATUS.APPROVED;
+      supplier.action = log.oldAction || ACTION.ACTIVE;
+      supplier.approveBy = null; // reset duyệt lại từ đầu
+      await supplier.save();
+    }
+  }
 
   return log;
 };
+
 
 const updateSupplierStatus = async (id, action) => {
   if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -397,7 +443,62 @@ const updateSupplierStatus = async (id, action) => {
   await supplier.save();
 
   return supplier;
-}
+};
+
+const requestChangeAction = async (id, newAction, user) => {
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    throw new Error("Invalid supplier ID");
+  }
+
+  const supplier = await Supplier.findById(id);
+  if (!supplier) {
+    throw new Error("Supplier not found");
+  }
+
+  if (![ACTION.ACTIVE, ACTION.INACTIVE].includes(newAction)) {
+    throw new Error("Invalid action. Must be ACTIVE or INACTIVE.");
+  }
+
+  if (supplier.status !== STATUS.APPROVED) {
+    throw new Error("Only approved suppliers can request status changes");
+  }
+
+  if (supplier.action === newAction) {
+    throw new Error(`Supplier is already ${newAction.toLowerCase()}`);
+  }
+
+  const userCurrent = await User.findOne({ email: user.email });
+  if (!userCurrent) {
+    throw new Error("User not found");
+  }
+  // lưu trạng cũ của action trước khi chuyển về inactive gửi cho manager duyệt
+  const oldAction = supplier.action;
+
+  // Chuyển supplier sang trạng thái chờ duyệt và INACTIVE tạm thời
+  supplier.status = STATUS.PENDING;
+  supplier.action = ACTION.INACTIVE;
+  await supplier.save();
+
+  const log = new SupplierLog({
+    supplierId: supplier._id,
+    name: supplier.name,
+    phone: supplier.phone,
+    email: supplier.email,
+    address: supplier.address,
+    taxId: supplier.taxId,
+    status: STATUS.PENDING,
+    action: ACTION.INACTIVE,
+    requestType: requestType.STATUS_CHANGE,
+    createdBy: userCurrent._id,
+    approveBy: null, // Chưa có người duyệt
+    oldAction: oldAction, // Trạng thái cũ của action
+    newAction: newAction, // Trạng thái mới được yêu cầu
+  });
+
+  await log.save();
+
+  return { message: "Supplier status change request created successfully" };
+};
 
 export default {
   getListSuppliers,
@@ -410,5 +511,6 @@ export default {
   getAllSuppliersActive,
   getAllSuppliers,
   getPendingLogBySupplierId,
-  updateSupplierStatus
+  updateSupplierStatus,
+  requestChangeAction,
 };
