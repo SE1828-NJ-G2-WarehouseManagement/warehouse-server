@@ -44,6 +44,12 @@ const supplierLogSchema = new Schema(
       enum: [requestType.CREATE, requestType.UPDATE, requestType.STATUS_CHANGE],
       required: true,
     },
+    oldAction : {
+      type: String, // Lưu trạng thái cũ của action
+    },
+    newAction: {
+      type: String, // Lưu trạng thái mới của action
+    },
   },
 
   { timestamps: true }

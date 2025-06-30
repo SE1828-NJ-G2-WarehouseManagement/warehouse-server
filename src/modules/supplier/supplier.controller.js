@@ -133,3 +133,18 @@ export const updateSupplierStatus = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 }
+
+export const requestChangeAction = async (req, res) => {
+  try {
+    const supplierId = req.params.id;
+    const { action } = req.body;
+    const updatedSupplier = await supplierService.requestChangeAction(
+      supplierId,
+      action,
+      req.user
+    );
+    res.status(200).json(updatedSupplier);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
