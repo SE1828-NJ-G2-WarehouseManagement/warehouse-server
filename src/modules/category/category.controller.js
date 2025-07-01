@@ -12,6 +12,21 @@ export const getCategories = async (req, res) => {
   }
 };
 
+export const getListCategories = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const name = req.query.name || '';
+    const status = req.query.status || '';
+    const type = req.query.type || '';
+
+
+    const result = await categoryService.getListCategories(page, name, status, type);
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 export const getCategoryById = async (req, res) => {
   try {
     const id = req.params.id;
@@ -27,6 +42,7 @@ export const getCategoryById = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
 
 export const createCategory = async (req, res) => {
   try {

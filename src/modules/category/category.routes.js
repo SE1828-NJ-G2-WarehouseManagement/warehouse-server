@@ -15,6 +15,12 @@ router.get(
 );
 
 router.get(
+  "/list",
+  authenticationMiddleware.verifyToken,
+  categoryController.getListCategories
+);
+
+router.get(
   "/active",
   authenticationMiddleware.verifyToken,
   categoryController.getActiveCategories
@@ -24,7 +30,6 @@ router.get(
 router.get(
   "/filter",
   authenticationMiddleware.verifyToken,
-  authenticationMiddleware.verifyRole(ROLES.WAREHOUSE_STAFF, ROLES.WAREHOUSE_MANAGER),
   categoryController.filterCategoriesByName 
 );
 
