@@ -23,4 +23,10 @@ router.get(
   zoneItemController.getAllActiveProductsInZones
 );
 
+router.get(
+  "/products/in-zones",
+  authenticationMiddleware.verifyToken,
+  zoneItemController.getAllProductsInZones
+);
+
 export default router;
