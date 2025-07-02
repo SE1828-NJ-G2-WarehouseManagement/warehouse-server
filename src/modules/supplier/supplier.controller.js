@@ -122,7 +122,7 @@ export const getPendingLogBySupplierId = async (req, res) => {
 export const updateSupplierStatus = async (req, res) => {
   try {
     const supplierId = req.params.id;
-    const { status } = req.body; 
+    const { status } = req.body;
     const updatedSupplier = await supplierService.updateSupplierStatus(
       supplierId,
       status,
@@ -132,7 +132,7 @@ export const updateSupplierStatus = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
-}
+};
 
 export const requestChangeAction = async (req, res) => {
   try {
@@ -144,6 +144,31 @@ export const requestChangeAction = async (req, res) => {
       req.user
     );
     res.status(200).json(updatedSupplier);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const getListSuppliersV2 = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const name = req.query.name || "";
+    const phone = req.query.phone || "";
+    const email = req.query.email || "";
+    const taxId = req.query.taxId || "";
+    const status = req.query.status || "";
+    const action = req.query.action || "";
+    const result = await supplierService.getListSuppliersV2(
+      page,
+      name,
+      phone,
+      email,
+      taxId,
+      status,
+      action
+    );
+
+    res.status(200).json(result);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
