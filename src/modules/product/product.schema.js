@@ -10,10 +10,19 @@ const productBase = z
       .refine((val) => val === undefined || val > 0, {
         message: "Density must be greater than 0",
       }),
-    storageTemperature: z.object({
-      min: z.number().optional(),
-      max: z.number().optional(),
-    }),
+    storageTemperature: z
+      .object({
+        min: z.number().optional(),
+        max: z.number().optional(),
+      })
+      .refine(
+        (val) =>
+          val.min === undefined || val.max === undefined || val.min < val.max,
+        {
+          message: "Min temperature must be less than max temperature",
+          path: ["min"],
+        }
+      ),
     reason: z.string().optional(),
     image: z.string().optional(),
   })

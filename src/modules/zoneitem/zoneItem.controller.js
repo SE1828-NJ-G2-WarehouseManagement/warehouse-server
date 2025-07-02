@@ -30,3 +30,21 @@ export const transferBetweenZone = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+export const getAllActiveProductsInZones = async (req, res) => {
+  try {
+    const products = await zoneItemService.getAllActiveProductsInZones();
+    res.status(200).json(products);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const getAllProductsInZones = async (req, res) => {
+  try {
+    const products = await zoneItemService.getAllProductsInZones();
+    res.status(200).json(products);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};

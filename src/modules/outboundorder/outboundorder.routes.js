@@ -23,8 +23,6 @@ router.get(
   ),
   outboundOrderController.getListOutboundOrder
 );
-export default router;
-
 router.get(
   "/:id",
   authenticationMiddleware.verifyToken,
@@ -34,3 +32,6 @@ router.get(
   ),
   outboundOrderController.getOutboundOrderById
 );
+
+export default router;
+
