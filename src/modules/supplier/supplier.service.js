@@ -16,7 +16,6 @@ const getPendingLogBySupplierId = async (supplierId) => {
   const log = await SupplierLog.findOne({
     supplierId,
     status: STATUS.PENDING,
-    action: ACTION.INACTIVE,
   })
     .sort({ createdAt: -1 })
     .populate("supplierId")
@@ -248,6 +247,9 @@ const updateSupplier = async (id, supplierData, user) => {
   if (!currentSupplier) {
     throw new Error("Supplier not found");
   }
+  if (currentSupplier.status !== STATUS.APPROVED) {
+    throw new Error("Only approved suppliers can be updated");
+  }
   if (currentSupplier.action !== ACTION.ACTIVE) {
     throw new Error("Only suppliers with action ACTIVE can be updated");
   }
@@ -306,7 +308,7 @@ const updateSupplier = async (id, supplierData, user) => {
   }
 
   currentSupplier.status = STATUS.PENDING;
-  currentSupplier.action = ACTION.INACTIVE;
+  currentSupplier.action = ACTION.ACTIVE;
   await currentSupplier.save();
 
   const log = new SupplierLog({
@@ -317,7 +319,7 @@ const updateSupplier = async (id, supplierData, user) => {
     address: supplierData.address || currentSupplier.address,
     taxId: supplierData.taxId || currentSupplier.taxId,
     status: STATUS.PENDING,
-    action: ACTION.INACTIVE,
+    action: ACTION.ACTIVE,
     requestType: requestType.UPDATE,
     createdBy: userCurrent._id,
   });
@@ -469,12 +471,9 @@ const requestChangeAction = async (id, newAction, user) => {
   if (!userCurrent) {
     throw new Error("User not found");
   }
-  // lưu trạng cũ của action trước khi chuyển về inactive gửi cho manager duyệt
   const oldAction = supplier.action;
 
-  // Chuyển supplier sang trạng thái chờ duyệt và INACTIVE tạm thời
   supplier.status = STATUS.PENDING;
-  supplier.action = ACTION.INACTIVE;
   await supplier.save();
 
   const log = new SupplierLog({
@@ -485,7 +484,7 @@ const requestChangeAction = async (id, newAction, user) => {
     address: supplier.address,
     taxId: supplier.taxId,
     status: STATUS.PENDING,
-    action: ACTION.INACTIVE,
+    action: supplier.action, // Giữ nguyên action hiện tại
     requestType: requestType.STATUS_CHANGE,
     createdBy: userCurrent._id,
     approveBy: null, // Chưa có người duyệt
@@ -509,28 +508,36 @@ const getListSuppliersV2 = async (
 ) => {
   const skip = (page - 1) * PAGE_SIZE;
   const query = {};
-  if (name) {
-    query.name = { $regex: name, $options: "i" };
-  }
-  if (phone) {
-    query.phone = { $regex: phone, $options: "i" };
-  }
-  if (email) {
-    query.email = { $regex: email, $options: "i" };
-  }
-  if (taxId) {
-    query.taxId = { $regex: taxId, $options: "i" };
-  }
-  if (status) {
-    query.status = status;
-  }
-  if (action) {
-    query.action = action;
-  }
 
-  const suppliers = await Supplier.find(query).skip(skip).limit(PAGE_SIZE);
+  if (name) query.name = { $regex: name, $options: "i" };
+  if (phone) query.phone = { $regex: phone, $options: "i" };
+  if (email) query.email = { $regex: email, $options: "i" };
+  if (taxId) query.taxId = { $regex: taxId, $options: "i" };
+  if (status) query.status = status;
+  if (action) query.action = action;
 
-  const total = await Supplier.countDocuments(query);
+  const [suppliers, total] = await Promise.all([
+    Supplier.find(query)
+      .skip(skip)
+      .limit(PAGE_SIZE)
+      .populate("approveBy")
+      .lean(),
+
+    Supplier.countDocuments(query),
+  ]);
+
+  // Duyệt từng supplier để lấy log PENDING mới nhất
+  for (const supplier of suppliers) {
+    const log = await SupplierLog.findOne({
+      supplierId: supplier._id,
+      status: STATUS.PENDING,
+    })
+      .populate("createdBy")
+      .sort({ createdAt: -1 })
+      .lean();
+
+    supplier.pendingLog = log || null;
+  }
 
   return {
     suppliers,
