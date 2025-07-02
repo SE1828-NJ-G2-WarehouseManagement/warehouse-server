@@ -122,7 +122,6 @@ const getAllSuppliers = async (page) => {
   };
 };
 
-
 // danh sách nhà cung cấp trạng thái đang chờ duyệt và trạng thái inactive
 // Thêm field requestType để phân biệt CREATE và UPDATE
 
@@ -424,7 +423,6 @@ const rejectSupplier = async (logId, user, note) => {
   return log;
 };
 
-
 const updateSupplierStatus = async (id, action) => {
   if (!mongoose.Types.ObjectId.isValid(id)) {
     throw new Error("Invalid supplier ID");
@@ -500,6 +498,49 @@ const requestChangeAction = async (id, newAction, user) => {
   return { message: "Supplier status change request created successfully" };
 };
 
+const getListSuppliersV2 = async (
+  page = 1,
+  name = "",
+  phone = "",
+  email = "",
+  taxId = "",
+  status = "",
+  action = ""
+) => {
+  const skip = (page - 1) * PAGE_SIZE;
+  const query = {};
+  if (name) {
+    query.name = { $regex: name, $options: "i" };
+  }
+  if (phone) {
+    query.phone = { $regex: phone, $options: "i" };
+  }
+  if (email) {
+    query.email = { $regex: email, $options: "i" };
+  }
+  if (taxId) {
+    query.taxId = { $regex: taxId, $options: "i" };
+  }
+  if (status) {
+    query.status = status;
+  }
+  if (action) {
+    query.action = action;
+  }
+
+  const suppliers = await Supplier.find(query).skip(skip).limit(PAGE_SIZE);
+
+  const total = await Supplier.countDocuments(query);
+
+  return {
+    suppliers,
+    total,
+    page,
+    pageSize: PAGE_SIZE,
+    totalPages: Math.ceil(total / PAGE_SIZE),
+  };
+};
+
 export default {
   getListSuppliers,
   getListSuppliersPending,
@@ -513,4 +554,5 @@ export default {
   getPendingLogBySupplierId,
   updateSupplierStatus,
   requestChangeAction,
+  getListSuppliersV2,
 };

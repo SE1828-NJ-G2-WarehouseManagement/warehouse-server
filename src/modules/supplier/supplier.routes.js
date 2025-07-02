@@ -6,6 +6,17 @@ import { validateSchema } from "../main.middleware.js";
 import { createSupplier } from "./supplier.schema.js";
 const router = express.Router();
 
+// @route   GET /api/v1/suppliers/filter
+router.get(
+  "/filter",
+  authenticationMiddleware.verifyToken,
+  authenticationMiddleware.allowRoles(
+    ROLES.WAREHOUSE_MANAGER,
+    ROLES.WAREHOUSE_STAFF
+  ),
+  supplierController.getListSuppliersV2
+);
+
 router.get(
   "/all-active",
   authenticationMiddleware.verifyToken,
@@ -116,5 +127,7 @@ router.put(
   authenticationMiddleware.allowRoles(ROLES.WAREHOUSE_STAFF),
   supplierController.requestChangeAction
 );
+
+
 
 export default router;
