@@ -84,9 +84,9 @@ export const updateProduct = async (req, res) => {
   }
 };
 
-export const changeProductStatus = async (req, res) => {
+export const changeProductAction = async (req, res) => {
   try {
-    const { status } = req.body;
+    const { action } = req.body;
     const id = req.params.id;
     let userId;
 
@@ -101,12 +101,12 @@ export const changeProductStatus = async (req, res) => {
     } else {
       return res.status(400).json({ message: "User ID not found in token" });
     }
-    if (!["ACTIVE", "INACTIVE"].includes(status)) {
+    if (!["ACTIVE", "INACTIVE"].includes(action)) {
       return res.status(400).json({ message: "Invalid status" });
     }
     const updatedProduct = await productService.changeProductStatus(
       id,
-      status,
+      action,
       userId
     );
     res.status(200).json(updatedProduct);
@@ -125,6 +125,47 @@ export const getActiveProducts = async (req, res) => {
   try {
     const products = await productService.getActiveProducts();
     res.status(200).json(products);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const approveProduct = async (req, res) => {
+  try {
+    const id = req.params.id;
+    let userId;
+    if (req.user._id) {
+      userId = req.user._id;
+    } else if (req.user.email) {
+      const user = await User.findOne({ email: req.user.email });
+      if (!user) return res.status(401).json({ message: "User not found" });
+      userId = user._id;
+    } else {
+      return res.status(400).json({ message: "User ID not found in token" });
+    }
+    const product = await productService.approveProduct(id, userId);
+    res.status(200).json(product);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const rejectProduct = async (req, res) => {
+  try {
+    const id = req.params.id;
+    const note = req.body.note;
+    let userId;
+    if (req.user._id) {
+      userId = req.user._id;
+    } else if (req.user.email) {
+      const user = await User.findOne({ email: req.user.email });
+      if (!user) return res.status(401).json({ message: "User not found" });
+      userId = user._id;
+    } else {
+      return res.status(400).json({ message: "User ID not found in token" });
+    }
+    const product = await productService.rejectProduct(id, userId, note);
+    res.status(200).json(product);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

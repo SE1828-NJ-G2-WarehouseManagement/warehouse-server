@@ -43,6 +43,22 @@ const productSchema = new Schema(
       ref: "User",
       default: null,
     },
+    requestType: {
+      type: String,
+      enum: ["CREATE", "STATUS_CHANGE", "UPDATE"],
+      default: null,
+    },
+    pendingChanges: {
+      name: String,
+      category: { type: Schema.Types.ObjectId, ref: "Category" },
+      storageTemperature: {
+        min: Number,
+        max: Number,
+      },
+      density: Number,
+      image: String,
+      action: String,
+    },
   },
   { timestamps: true }
 );

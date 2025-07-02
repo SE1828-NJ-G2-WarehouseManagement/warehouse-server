@@ -84,6 +84,7 @@ const updateCategory = async (id, data, userId) => {
   }
 
   currentCategory.requestType = "UPDATE";
+  currentCategory.status = STATUS.PENDING;
   currentCategory.pendingChanges = {
     ...(data.name && { name: data.name }),
     ...(data.status && { status: data.status }),

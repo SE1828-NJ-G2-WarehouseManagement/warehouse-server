@@ -46,13 +46,27 @@ router.put(
 );
 
 // @route   POST /api/v1/products/:id/status
-router.post(
+router.put(
   "/:id/status",
   authenticationMiddleware.verifyToken,
   authenticationMiddleware.verifyRole(ROLES.WAREHOUSE_MANAGER),
-  productController.changeProductStatus
+  productController.changeProductAction
 );
 
+// @route   PUT /api/v1/product/approve/:id
+router.put(
+  "/approve/:id",
+  authenticationMiddleware.verifyToken,
+  authenticationMiddleware.verifyRole(ROLES.WAREHOUSE_MANAGER),
+  productController.approveProduct
+);
 
+// @route   PUT /api/v1/product/reject/:id
+router.put(
+  "/reject/:id",
+  authenticationMiddleware.verifyToken,
+  authenticationMiddleware.verifyRole(ROLES.WAREHOUSE_MANAGER),
+  productController.rejectProduct
+);
 
 export default router;

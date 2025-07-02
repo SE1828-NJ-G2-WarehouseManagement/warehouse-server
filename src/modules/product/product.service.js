@@ -11,6 +11,9 @@ const createProduct = async (data, userId) => {
   const product = new Product({
     ...data,
     status: STATUS.PENDING,
+    action: "INACTIVE",
+    requestType: "CREATE",
+    pendingChanges: null,
     createdBy: userId,
     updatedBy: userId,
   });
@@ -71,8 +74,6 @@ const updateProduct = async (id, data, userId) => {
           break;
         }
       }
-    } else {
-      continue;
     }
   }
   if (allSame) throw new Error("Product already exists");
@@ -81,33 +82,49 @@ const updateProduct = async (id, data, userId) => {
   const exist = await Product.findOne(query);
   if (exist) throw new Error("Product already exists");
 
-  data.status = STATUS.PENDING;
-  data.updatedBy = userId;
+  currentProduct.requestType = "UPDATE";
+  currentProduct.status = STATUS.PENDING;
+  currentProduct.pendingChanges = {
+    ...(data.name && { name: data.name }),
+    ...(data.category && { category: data.category }),
+    ...(data.density && { density: data.density }),
+    ...(data.storageTemperature && {
+      storageTemperature: data.storageTemperature,
+    }),
+    ...(data.image && { image: data.image }),
+    ...(data.reason && { reason: data.reason }),
+  };
+  currentProduct.updatedBy = userId;
+  await currentProduct.save();
 
-  const product = await Product.findByIdAndUpdate(id, data, { new: true });
-  if (!product) throw new Error("Product not found");
-  return product;
+  return await Product.findById(id)
+    .populate("category")
+    .populate("createdBy")
+    .populate("updatedBy");
 };
 
-const changeProductStatus = async (id, newStatus, userId) => {
+const changeProductAction = async (id, newAction, userId) => {
   if (!mongoose.Types.ObjectId.isValid(id))
     throw new Error("Invalid product ID");
   const product = await Product.findById(id);
   if (!product) throw new Error("Product not found");
 
-  const currentStatus = product.status;
+  if (product.status === STATUS.PENDING) {
+    throw new Error("Cannot change action while product is pending approval.");
+  }
 
   if (
-    (currentStatus === "PENDING" &&
-      (newStatus === "ACTIVE" || newStatus === "INACTIVE")) ||
-    (currentStatus === "ACTIVE" && newStatus === "INACTIVE") ||
-    (currentStatus === "INACTIVE" && newStatus === "PENDING")
+    (product.action === ACTION.ACTIVE && newAction === ACTION.INACTIVE) ||
+    (product.action === ACTION.INACTIVE && newAction === ACTION.ACTIVE)
   ) {
-    product.status = newStatus;
-    product.approveBy = userId;
-    return await product.save();
+    product.pendingChanges = { action: newAction };
+    product.status = STATUS.PENDING;
+    product.requestType = "STATUS_CHANGE";
+    product.updatedBy = userId;
+    await product.save();
+    return product;
   } else {
-    throw new Error("Invalid status transition");
+    throw new Error("Invalid action transition");
   }
 };
 
@@ -118,11 +135,85 @@ const getActiveProducts = async () => {
     .populate("updatedBy", "email role _id");
 };
 
+const approveProduct = async (id, userId) => {
+  if (!mongoose.Types.ObjectId.isValid(id))
+    throw new Error("Invalid product ID");
+  const product = await Product.findById(id);
+  if (!product) throw new Error("Product not found");
+  if (product.status !== STATUS.PENDING)
+    throw new Error("Only pending products can be approved");
+
+  if (
+    product.requestType === "UPDATE" ||
+    product.requestType === "STATUS_CHANGE"
+  ) {
+    if (product.pendingChanges) {
+      if (product.pendingChanges.name)
+        product.name = product.pendingChanges.name;
+      if (product.pendingChanges.category)
+        product.category = product.pendingChanges.category;
+      if (product.pendingChanges.density)
+        product.density = product.pendingChanges.density;
+      if (product.pendingChanges.storageTemperature)
+        product.storageTemperature = product.pendingChanges.storageTemperature;
+      if (product.pendingChanges.image)
+        product.image = product.pendingChanges.image;
+      if (product.pendingChanges.action)
+        product.action = product.pendingChanges.action;
+    }
+    product.status = STATUS.APPROVED;
+    product.pendingChanges = null;
+    product.requestType = null;
+    product.approveBy = userId;
+    await product.save();
+    return product;
+  }
+
+  // CREATE
+  product.status = STATUS.APPROVED;
+  product.action = ACTION.ACTIVE;
+  product.approveBy = userId;
+  await product.save();
+  return product;
+};
+
+const rejectProduct = async (id, userId, note) => {
+  if (!mongoose.Types.ObjectId.isValid(id))
+    throw new Error("Invalid product ID");
+  const product = await Product.findById(id);
+  if (!product) throw new Error("Product not found");
+  if (product.status !== STATUS.PENDING)
+    throw new Error("Only pending products can be rejected");
+
+  if (
+    product.requestType === "UPDATE" ||
+    product.requestType === "STATUS_CHANGE"
+  ) {
+    product.pendingChanges = null;
+    product.requestType = null;
+    product.status = STATUS.APPROVED;
+    product.rejectedNote = note;
+    product.approveBy = userId;
+    await product.save();
+    return product;
+  }
+
+  // CREATE
+  product.status = STATUS.REJECTED;
+  product.action = ACTION.INACTIVE;
+  product.rejectedNote = note;
+  product.approveBy = userId;
+  await product.save();
+  return product;
+};
+
 export default {
   createProduct,
   getProducts,
   getProductById,
   updateProduct,
-  changeProductStatus,
+  changeProductAction,
   getActiveProducts,
+  approveProduct,
+  rejectProduct,
 };
