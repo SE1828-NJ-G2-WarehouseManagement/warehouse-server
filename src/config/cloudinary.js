@@ -19,6 +19,17 @@ const storage = new CloudinaryStorage({
   },
 });
 
+const productImageStorage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: "warehouse-products",
+    allowed_formats: ["jpg", "jpeg", "png", "gif"],
+    transformation: [{ width: 500, height: 500, crop: "fill" }],
+  },
+});
+
+const uploadProductImage = multer({ storage: productImageStorage });
+
 // Configure multer
 const upload = multer({ storage: storage });
 
@@ -33,4 +44,6 @@ const deleteImage = async (publicId) => {
   }
 };
 
-export { upload, cloudinary, deleteImage }; 
+
+
+export { upload, cloudinary, deleteImage, uploadProductImage }; 

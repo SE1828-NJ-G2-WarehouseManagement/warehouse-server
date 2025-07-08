@@ -4,6 +4,8 @@ import { validateSchema } from "../main.middleware.js";
 import { createProduct, updateProduct } from "./product.schema.js";
 import * as authenticationMiddleware from "../main.middleware.js";
 import { ROLES } from "../../constant/role.constant.js";
+import { uploadProductImage } from "../../config/cloudinary.js";
+import { parseStorageTemperature } from "./product.middleware.js";
 
 const router = express.Router();
 
@@ -32,6 +34,8 @@ router.post(
   "/",
   authenticationMiddleware.verifyToken,
   authenticationMiddleware.verifyRole(ROLES.WAREHOUSE_STAFF),
+  uploadProductImage.single("image"),
+  // parseStorageTemperature,
   validateSchema(createProduct),
   productController.createProduct
 );
@@ -41,6 +45,8 @@ router.put(
   "/:id",
   authenticationMiddleware.verifyToken,
   authenticationMiddleware.verifyRole(ROLES.WAREHOUSE_STAFF),
+  uploadProductImage.single("image"),
+  // parseStorageTemperature,
   validateSchema(updateProduct),
   productController.updateProduct
 );

@@ -29,7 +29,6 @@ export const getProductById = async (req, res) => {
 export const createProduct = async (req, res) => {
   try {
     let userId;
-
     if (req.user._id) {
       userId = req.user._id;
     } else if (req.user.email) {
@@ -41,7 +40,12 @@ export const createProduct = async (req, res) => {
     } else {
       return res.status(400).json({ message: "User ID not found in token" });
     }
-    const product = await productService.createProduct(req.body, userId);
+    // Lấy đường dẫn ảnh từ file upload
+    const image = req.file ? req.file.path : undefined;
+    const product = await productService.createProduct(
+      { ...req.body, image },
+      userId
+    );
     res.status(201).json(product);
   } catch (error) {
     if (error.message === "Product name already exists") {
@@ -55,7 +59,6 @@ export const updateProduct = async (req, res) => {
   try {
     const id = req.params.id;
     let userId;
-
     if (req.user._id) {
       userId = req.user._id;
     } else if (req.user.email) {
@@ -67,9 +70,10 @@ export const updateProduct = async (req, res) => {
     } else {
       return res.status(400).json({ message: "User ID not found in token" });
     }
+    const image = req.file ? req.file.path : undefined;
     const updatedProduct = await productService.updateProduct(
       id,
-      req.body,
+      { ...req.body, image },
       userId
     );
     res.status(200).json(updatedProduct);

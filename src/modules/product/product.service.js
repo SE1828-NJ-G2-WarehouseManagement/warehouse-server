@@ -2,6 +2,7 @@ import Product from "./product.model.js";
 import mongoose from "mongoose";
 import { STATUS } from "../../constant/status.constant.js";
 import Category from "../category/category.model.js";
+import { deleteImage } from "../../config/cloudinary.js";
 
 const createProduct = async (data, userId) => {
   const exist = await Product.findOne({ name: data.name });
@@ -10,6 +11,7 @@ const createProduct = async (data, userId) => {
   if (!existCategory) throw new Error("Category not found");
   const product = new Product({
     ...data,
+    image: data.image,
     status: STATUS.PENDING,
     action: "INACTIVE",
     requestType: "CREATE",
@@ -91,7 +93,7 @@ const updateProduct = async (id, data, userId) => {
     ...(data.storageTemperature && {
       storageTemperature: data.storageTemperature,
     }),
-    ...(data.image && { image: data.image }),
+    ...(data.image && { image: data.image }), 
     ...(data.reason && { reason: data.reason }),
   };
   currentProduct.updatedBy = userId;
@@ -148,6 +150,22 @@ const approveProduct = async (id, userId) => {
     product.requestType === "STATUS_CHANGE"
   ) {
     if (product.pendingChanges) {
+      // Nếu có ảnh mới và đã có ảnh cũ thì xóa ảnh cũ trên Cloudinary
+      if (product.pendingChanges.image && product.image) {
+        try {
+          // Lấy publicId từ url cloudinary (ví dụ: warehouse-products/abcxyz)
+          const oldImageUrl = product.image;
+          const publicIdMatch = oldImageUrl.match(
+            /warehouse-products\/([^\.\/]+)/
+          );
+          if (publicIdMatch) {
+            const publicId = `warehouse-products/${publicIdMatch[1]}`;
+            await deleteImage(publicId);
+          }
+        } catch (error) {
+          console.error("Error deleting old product image:", error);
+        }
+      }
       if (product.pendingChanges.name)
         product.name = product.pendingChanges.name;
       if (product.pendingChanges.category)
