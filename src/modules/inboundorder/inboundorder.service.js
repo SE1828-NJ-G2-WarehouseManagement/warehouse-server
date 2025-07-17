@@ -166,7 +166,7 @@ const getInboundById = async (id) => {
   if (!mongoose.Types.ObjectId.isValid(id)) {
     throw new Error("Invalid ID format");
   }
-  
+
   const inboundOrder = await InboundOrder.findById(id)
     .populate("createdBy")
     .populate("zoneId")

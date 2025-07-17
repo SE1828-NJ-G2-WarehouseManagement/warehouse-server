@@ -135,7 +135,13 @@ const transferBetweenZone = async (
 
   // 8. Trừ số lượng source zone
   sourceZoneItem.quantity -= quantity;
-  await sourceZoneItem.save();
+  if (sourceZoneItem.quantity <= 0) {
+    // Nếu số lượng về 0 hoặc nhỏ hơn, xóa khỏi zone
+    await ZoneItem.deleteOne({ _id: sourceZoneItem._id });
+  } else {
+    // Ngược lại thì chỉ update lại số lượng
+    await sourceZoneItem.save();
+  }
 
   // 9. Cộng vào destination zone (tạo nếu chưa có)
   let destinationZoneItem = await ZoneItem.findOne({
