@@ -31,7 +31,6 @@ const verifyToken = async (req, res, next) => {
     return res.status(401).json({ message: "Invalid or expired token" });
   }
 
-  console.log(data);
   req.user = data;
   next();
 };

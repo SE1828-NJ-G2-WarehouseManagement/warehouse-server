@@ -153,8 +153,12 @@ const viewProfile = async (req, res) => {
 const updateProfile = async (req, res) => {
   try {
     const { email, username, phone, firstName, lastName } = req.body;
+    console.log(`======= update ======`);
+    console.log(req.body);
 
-    // Get avatar URL from uploaded file if exists
+    
+
+    // Get avatar URL from uploaded file if exists  
     const avatar = req.file ? req.file.path : undefined;
     
 
@@ -173,7 +177,7 @@ const updateProfile = async (req, res) => {
       data: updatedUser,
     });
   } catch (error) {
-    console.log(`error: ${error}`);
+    console.log("err:", JSON.stringify(error, null, 2));
     return res.status(500).json({
       message: "Update profile failed",
       isSuccess: false,
@@ -202,7 +206,6 @@ const getUserById = async (req, res) => {
 const getAllUser = async (req, res) => {
   try {
     const data = await userService.getAllUser();
-    console.log(data);
     return res.status(200).json({
       message: "Get list successfully",
       isSuccess: true,

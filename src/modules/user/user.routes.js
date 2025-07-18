@@ -25,7 +25,7 @@ import {
 } from "./user.schema.js";
 import * as authenticationMiddleware from "../main.middleware.js";
 import { ROLES } from "../../constant/role.constant.js";
-import { upload } from "../../config/cloudinary.js";
+import { uploadSingle } from "../../config/cloudinary.js";
 
 const userRouter = express.Router();
 
@@ -103,7 +103,7 @@ userRouter.get(
 userRouter.put(
   "/update-profile",
   authenticationMiddleware.verifyToken,
-  upload.single('avatar'),
+  uploadSingle('avatar'),
   validateSchema(updateProfileUser),
   updateProfile
 );
