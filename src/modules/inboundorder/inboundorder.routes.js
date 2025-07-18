@@ -24,6 +24,16 @@ router.get(
   ),
   inboundOrderController.getListInboundOrder
 );
+// xem phiếu nhập theo kho
+router.get(
+  "/warehouse",
+  authenticationMiddleware.verifyToken,
+  authenticationMiddleware.allowRoles(
+    ROLES.WAREHOUSE_MANAGER,
+    ROLES.WAREHOUSE_STAFF
+  ),
+  inboundOrderController.getInboundByWarehouse
+);
 
 // xem chi tiết phiếu nhập
 router.get(
@@ -35,5 +45,7 @@ router.get(
   ),
   inboundOrderController.getInboundById
 );
+
+
 
 export default router;
