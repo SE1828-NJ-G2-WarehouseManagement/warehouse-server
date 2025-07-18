@@ -146,6 +146,7 @@ const getListInboundOrder = async (page) => {
       .populate("createdBy")
       .populate("zoneId")
       .populate("item.productId")
+      .populate("supplierId")
       .skip(skip)
       .limit(PAGE_SIZE),
     InboundOrder.countDocuments({}),
@@ -166,19 +167,43 @@ const getInboundById = async (id) => {
   if (!mongoose.Types.ObjectId.isValid(id)) {
     throw new Error("Invalid ID format");
   }
-  
+
   const inboundOrder = await InboundOrder.findById(id)
     .populate("createdBy")
     .populate("zoneId")
-    .populate("item.productId");
+    .populate("item.productId")
+    .populate("supplierId");
+
   if (!inboundOrder) {
     throw new Error("Inbound order not found");
   }
   return inboundOrder;
 };
 
+// xem phiếu theo warehouse
+const getInboundByWarehouse = async (user) => {
+ const userCurrent = await User.findOne({ email: user.email });
+  if (!userCurrent) {
+    throw new Error("User not found");
+  }
+  const zones = await Zone.find({
+    warehouseId: userCurrent.assignedWarehouse,
+  });
+
+  const inboundOrders = await InboundOrder.find({
+    zoneId: { $in: zones.map((zone) => zone._id) },
+  })
+    .populate("createdBy")
+    .populate("zoneId")
+    .populate("item.productId")
+    .populate("supplierId");
+
+  return inboundOrders;
+};
+
 export default {
   createInboundOrder,
   getListInboundOrder,
   getInboundById,
+  getInboundByWarehouse,
 };

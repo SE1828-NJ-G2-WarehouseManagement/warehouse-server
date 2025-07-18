@@ -10,6 +10,12 @@ const inboundOrderSchema = new Schema({
     ref: "Zone",
     required: true,
   },
+
+  supplierId: {
+  type: mongoose.Schema.Types.ObjectId,
+  ref: "Supplier",
+  required: true,
+},
   item: [
     {
       productId: {
