@@ -146,6 +146,7 @@ const getListInboundOrder = async (page) => {
       .populate("createdBy")
       .populate("zoneId")
       .populate("item.productId")
+      .populate("supplierId")
       .skip(skip)
       .limit(PAGE_SIZE),
     InboundOrder.countDocuments({}),
@@ -170,7 +171,9 @@ const getInboundById = async (id) => {
   const inboundOrder = await InboundOrder.findById(id)
     .populate("createdBy")
     .populate("zoneId")
-    .populate("item.productId");
+    .populate("item.productId")
+    .populate("supplierId");
+
   if (!inboundOrder) {
     throw new Error("Inbound order not found");
   }
@@ -192,7 +195,8 @@ const getInboundByWarehouse = async (user) => {
   })
     .populate("createdBy")
     .populate("zoneId")
-    .populate("item.productId");
+    .populate("item.productId")
+    .populate("supplierId");
 
   return inboundOrders;
 };
