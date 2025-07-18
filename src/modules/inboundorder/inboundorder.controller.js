@@ -32,3 +32,13 @@ export const getInboundById = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+export const getInboundByWarehouse = async (req, res) => {
+  try {
+    const user = req.user;
+    const inboundOrders = await inboundOrderService.getInboundByWarehouse(user);
+    res.status(200).json(inboundOrders);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};

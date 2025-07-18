@@ -177,8 +177,29 @@ const getInboundById = async (id) => {
   return inboundOrder;
 };
 
+// xem phiếu theo warehouse
+const getInboundByWarehouse = async (user) => {
+ const userCurrent = await User.findOne({ email: user.email });
+  if (!userCurrent) {
+    throw new Error("User not found");
+  }
+  const zones = await Zone.find({
+    warehouseId: userCurrent.assignedWarehouse,
+  });
+
+  const inboundOrders = await InboundOrder.find({
+    zoneId: { $in: zones.map((zone) => zone._id) },
+  })
+    .populate("createdBy")
+    .populate("zoneId")
+    .populate("item.productId");
+
+  return inboundOrders;
+};
+
 export default {
   createInboundOrder,
   getListInboundOrder,
   getInboundById,
+  getInboundByWarehouse,
 };
