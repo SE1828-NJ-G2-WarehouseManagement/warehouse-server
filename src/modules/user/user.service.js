@@ -177,7 +177,7 @@ const viewProfile = async (email) => {
 
 const updateProfile = async (email, username, phone, avatar, firstName, lastName) => {
   try {
-    const userFound = await User.findOne({ email });
+    const userFound = await User.findOne({ email });    
 
     if (!userFound) {
       throw new Error("User not found");
@@ -194,7 +194,6 @@ const updateProfile = async (email, username, phone, avatar, firstName, lastName
         }
       } catch (error) {
         console.error('Error deleting old avatar:', error);
-        // Continue with update even if deletion fails
       }
     }
 
@@ -210,6 +209,7 @@ const updateProfile = async (email, username, phone, avatar, firstName, lastName
 
     return updatedUser;
   } catch(error) {
+    console.log(error);
     throw error;
   }
 }

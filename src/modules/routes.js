@@ -10,6 +10,7 @@ import supplierRouter from './supplier/supplier.routes.js';
 import inboundOrderRouter from './inboundorder/inboundorder.routes.js'
 import expireRouter from './expired/expired.routes.js';
 import outboundOrderRouter from './outboundorder/outboundorder.routes.js';
+import adminRouter from './reports/admin-dashboard/admin.report.route.js';
 
 const mainRouter = express.Router();
 
@@ -25,5 +26,7 @@ mainRouter.use('/customers', customerRouter);
 mainRouter.use("/inbounds",inboundOrderRouter);
 mainRouter.use('/expired', expireRouter);
 mainRouter.use('/outbounds', outboundOrderRouter);
+mainRouter.use('/admin', adminRouter);
+
 
 export default mainRouter;
