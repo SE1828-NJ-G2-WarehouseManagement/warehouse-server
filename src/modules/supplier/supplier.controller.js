@@ -11,6 +11,16 @@ export const getListSuppliers = async (req, res) => {
   }
 };
 
+export const getAllSuppliers = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const result = await supplierService.getAllSuppliers(page);
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 export const getListSuppliersPending = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -93,6 +103,72 @@ export const getAllSuppliersActive = async (req, res) => {
   try {
     const suppliers = await supplierService.getAllSuppliersActive();
     res.status(200).json(suppliers);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const getPendingLogBySupplierId = async (req, res) => {
+  try {
+    const supplierId = req.params.id;
+    const pendingLogs = await supplierService.getPendingLogBySupplierId(
+      supplierId
+    );
+    res.status(200).json(pendingLogs);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+export const updateSupplierStatus = async (req, res) => {
+  try {
+    const supplierId = req.params.id;
+    const { status } = req.body;
+    const updatedSupplier = await supplierService.updateSupplierStatus(
+      supplierId,
+      status,
+      req.user
+    );
+    res.status(200).json(updatedSupplier);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const requestChangeAction = async (req, res) => {
+  try {
+    const supplierId = req.params.id;
+    const { action } = req.body;
+    const updatedSupplier = await supplierService.requestChangeAction(
+      supplierId,
+      action,
+      req.user
+    );
+    res.status(200).json(updatedSupplier);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const getListSuppliersV2 = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const name = req.query.name || "";
+    const phone = req.query.phone || "";
+    const email = req.query.email || "";
+    const taxId = req.query.taxId || "";
+    const status = req.query.status || "";
+    const action = req.query.action || "";
+    const result = await supplierService.getListSuppliersV2(
+      page,
+      name,
+      phone,
+      email,
+      taxId,
+      status,
+      action
+    );
+
+    res.status(200).json(result);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

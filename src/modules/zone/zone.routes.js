@@ -40,7 +40,7 @@ router.put(
   zoneController.updateZone
 );
 
-router.post(
+router.put(
   "/:id/status",
   authenticationMiddleware.verifyToken,
   zoneController.changeStatusZone

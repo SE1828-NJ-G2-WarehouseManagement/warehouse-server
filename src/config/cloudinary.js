@@ -2,14 +2,14 @@ import { v2 as cloudinary } from 'cloudinary';
 import { CloudinaryStorage } from 'multer-storage-cloudinary';
 import multer from 'multer';
 
-// Configure Cloudinary
+// 1. Configure Cloudinary
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// Configure storage
+// 2. Configure Cloudinary storage
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
@@ -30,10 +30,32 @@ const productImageStorage = new CloudinaryStorage({
 
 const uploadProductImage = multer({ storage: productImageStorage });
 
-// Configure multer
-const upload = multer({ storage: storage });
 
-// Function to delete image from Cloudinary
+// 3. Create Multer instance
+const upload = multer({
+  storage: storage,
+  limits: {
+    fileSize: 2 * 1024 * 1024, // optional: limit 2MB
+  },
+});
+
+const uploadSingle = (fieldName) => {
+  console.log(fieldName);
+  
+  return (req, res, next) => {
+    const uploader = upload.single(fieldName);
+    uploader(req, res, function (err) {
+      if (err instanceof multer.MulterError) {
+        return res.status(400).json({ message: `Multer error: ${err.message}` });
+      } else if (err) {
+        return res.status(500).json({ message: `Upload error: ${err.message}` });
+      }
+      next();
+    });
+  };
+};
+
+// 5. Delete image (Cloudinary)
 const deleteImage = async (publicId) => {
   try {
     const result = await cloudinary.uploader.destroy(publicId);
@@ -45,5 +67,4 @@ const deleteImage = async (publicId) => {
 };
 
 
-
-export { upload, cloudinary, deleteImage, uploadProductImage }; 
+export { upload, uploadSingle, cloudinary, deleteImage, uploadProductImage };

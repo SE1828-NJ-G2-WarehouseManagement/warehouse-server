@@ -268,4 +268,5 @@ export default {
   updateZone,
   changeStatusZone,
   getZoneWithoutPagination,
+  changeStatusZone
 };

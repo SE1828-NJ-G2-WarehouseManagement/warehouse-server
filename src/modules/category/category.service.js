@@ -28,6 +28,9 @@ const getCategories = async (page = 1) => {
     Category.find()
       .populate("createdBy", "firstName lastName phone _id")
       .populate("updatedBy", "firstName lastName phone _id")
+      .sort({
+        status: 1
+      })
       .skip(skip)
       .limit(PAGE_SIZE),
     Category.countDocuments({}),
@@ -41,12 +44,70 @@ const getCategories = async (page = 1) => {
   };
 };
 
+const getListCategories = async (page = 1, name = '', status = '', type = '') => {
+  const skip = (page - 1) * PAGE_SIZE;
+
+  const query = {};
+  if (name) {
+    query.name = { $regex: name, $options: 'i' };
+  }
+
+  if (status && status !== '') {
+    query.status = status;
+  }
+
+  if (type && type !== '') {
+    query.requestType = type;
+  }
+
+  const [data, total] = await Promise.all([
+    Category.find(query)
+      .populate("createdBy", "firstName lastName phone _id")
+      .populate("updatedBy", "firstName lastName phone _id")
+      .sort({
+        status: 1
+      })
+      .skip(skip)
+      .limit(PAGE_SIZE),
+    Category.countDocuments(query), // Áp dụng query vào countDocuments
+  ]);
+
+  return {
+    data,
+    total,
+    page,
+    pageSize: PAGE_SIZE,
+    totalPages: Math.ceil(total / PAGE_SIZE),
+  };
+};
+
+
+const filterCategoriesByName = async (name, page = 1) => {
+  const skip = (page - 1) * PAGE_SIZE;
+  const [data, total] = await Promise.all([
+    Category.find({ name: new RegExp(name, "i") })
+      .populate("createdBy", "firstName lastName phone _id")
+      .populate("updatedBy", "firstName lastName phone _id")
+      .sort({ status: 1 })
+      .skip(skip)
+      .limit(PAGE_SIZE),
+    Category.countDocuments({ name: new RegExp(name, "i") }),
+  ]);
+  return {
+    data,
+    total,
+    page,
+    pageSize: PAGE_SIZE,
+    totalPages: Math.ceil(total / PAGE_SIZE),
+  };
+}
+
 const getCategoryById = async (id) => {
   if (!mongoose.Types.ObjectId.isValid(id)) {
     throw new Error("Invalid category ID");
   }
   const category = await Category.findById(id).populate("createdBy", "firstName lastName phone _id")
-  .populate("updatedBy", "firstName lastName phone _id").populate("approveBy", "firstName lastName phone _id");
+    .populate("updatedBy", "firstName lastName phone _id").populate("approveBy", "firstName lastName phone _id");
   if (!category) {
     throw new Error("Category not found");
   }
@@ -155,11 +216,10 @@ const approveCategory = async (id, userId) => {
     category.status = STATUS.APPROVED;
     category.pendingChanges = null;
     category.requestType = null;
-    category.approveBy = userId;
+    category.approveBy = userId;  
     await category.save();
     return category;
   }
-
   category.status = STATUS.APPROVED;
   category.action = ACTION.ACTIVE;
   category.approveBy = userId;
@@ -183,7 +243,7 @@ const rejectCategory = async (id, userId, note) => {
   ) {
     category.pendingChanges = null;
     category.requestType = null;
-    category.status = STATUS.APPROVED; 
+    category.status = STATUS.APPROVED;
     category.rejectedNote = note;
     category.approveBy = userId;
     await category.save();
@@ -211,4 +271,6 @@ export default {
   approveCategory,
   rejectCategory,
   getActiveCategories,
+  filterCategoriesByName,
+  getListCategories
 };

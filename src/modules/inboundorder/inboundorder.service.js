@@ -9,6 +9,7 @@ import Item from "../item/item.model.js";
 import ZoneItem from "../zoneitem/zoneItem.model.js";
 import PAGE_SIZE from "../../constant/pageSize.constant.js";
 import mongoose from "mongoose";
+import { ACTION } from "../../constant/action.constant.js";
 
 const createInboundOrder = async (data, user) => {
   const { zoneId, items, supplierId } = data;
@@ -29,7 +30,7 @@ const createInboundOrder = async (data, user) => {
     throw new Error("Supplier not found");
   }
 
-  if (supplier.status !== STATUS.ACTIVE) {
+  if (supplier.action !== ACTION.ACTIVE) {
     throw new Error("Supplier is not active");
   }
   // check zone
@@ -61,7 +62,7 @@ const createInboundOrder = async (data, user) => {
 
     // check product
     const product = await Product.findById(item.productId);
-    if (!product || product.status !== STATUS.ACTIVE) {
+    if (!product || product.action !== ACTION.ACTIVE) {
       throw new Error(`Product with ID ${item.productId} not found`);
     }
 
@@ -145,6 +146,7 @@ const getListInboundOrder = async (page) => {
       .populate("createdBy")
       .populate("zoneId")
       .populate("item.productId")
+      .populate("supplierId")
       .skip(skip)
       .limit(PAGE_SIZE),
     InboundOrder.countDocuments({}),
@@ -165,19 +167,43 @@ const getInboundById = async (id) => {
   if (!mongoose.Types.ObjectId.isValid(id)) {
     throw new Error("Invalid ID format");
   }
-  
+
   const inboundOrder = await InboundOrder.findById(id)
     .populate("createdBy")
     .populate("zoneId")
-    .populate("item.productId");
+    .populate("item.productId")
+    .populate("supplierId");
+
   if (!inboundOrder) {
     throw new Error("Inbound order not found");
   }
   return inboundOrder;
 };
 
+// xem phiếu theo warehouse
+const getInboundByWarehouse = async (user) => {
+ const userCurrent = await User.findOne({ email: user.email });
+  if (!userCurrent) {
+    throw new Error("User not found");
+  }
+  const zones = await Zone.find({
+    warehouseId: userCurrent.assignedWarehouse,
+  });
+
+  const inboundOrders = await InboundOrder.find({
+    zoneId: { $in: zones.map((zone) => zone._id) },
+  })
+    .populate("createdBy")
+    .populate("zoneId")
+    .populate("item.productId")
+    .populate("supplierId");
+
+  return inboundOrders;
+};
+
 export default {
   createInboundOrder,
   getListInboundOrder,
   getInboundById,
+  getInboundByWarehouse,
 };

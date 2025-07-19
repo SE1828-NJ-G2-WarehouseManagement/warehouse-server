@@ -12,6 +12,21 @@ export const getCategories = async (req, res) => {
   }
 };
 
+export const getListCategories = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const name = req.query.name || '';
+    const status = req.query.status || '';
+    const type = req.query.type || '';
+
+
+    const result = await categoryService.getListCategories(page, name, status, type);
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 export const getCategoryById = async (req, res) => {
   try {
     const id = req.params.id;
@@ -27,6 +42,7 @@ export const getCategoryById = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
 
 export const createCategory = async (req, res) => {
   try {
@@ -187,3 +203,16 @@ export const getActiveCategories = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+export const filterCategoriesByName = async (req, res) => {
+  try {
+    const { name } = req.query;
+    if (!name) {
+      return res.status(400).json({ message: "Name query parameter is required" });
+    }
+    const categories = await categoryService.filterCategoriesByName(name);
+    res.status(200).json(categories);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+}

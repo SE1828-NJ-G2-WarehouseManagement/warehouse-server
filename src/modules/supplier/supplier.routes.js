@@ -6,6 +6,17 @@ import { validateSchema } from "../main.middleware.js";
 import { createSupplier } from "./supplier.schema.js";
 const router = express.Router();
 
+// @route   GET /api/v1/suppliers/filter
+router.get(
+  "/filter",
+  authenticationMiddleware.verifyToken,
+  authenticationMiddleware.allowRoles(
+    ROLES.WAREHOUSE_MANAGER,
+    ROLES.WAREHOUSE_STAFF
+  ),
+  supplierController.getListSuppliersV2
+);
+
 router.get(
   "/all-active",
   authenticationMiddleware.verifyToken,
@@ -24,6 +35,17 @@ router.get(
     ROLES.WAREHOUSE_STAFF
   ),
   supplierController.getListSuppliers
+);
+
+// @route   GET /api/v1/suppliers/all
+router.get(
+  "/all",
+  authenticationMiddleware.verifyToken,
+  authenticationMiddleware.allowRoles(
+    ROLES.WAREHOUSE_MANAGER,
+    ROLES.WAREHOUSE_STAFF
+  ),
+  supplierController.getAllSuppliers
 );
 
 // @route   GET /api/v1/suppliers/pending
@@ -79,5 +101,33 @@ router.put(
   authenticationMiddleware.allowRoles(ROLES.WAREHOUSE_MANAGER),
   supplierController.rejectSupplier
 );
+// @route   GET /api/v1/suppliers/pending-log/:id
+router.get(
+  "/pending-log/:id",
+  authenticationMiddleware.verifyToken,
+  authenticationMiddleware.allowRoles(
+    ROLES.WAREHOUSE_MANAGER,
+    ROLES.WAREHOUSE_STAFF
+  ),
+  supplierController.getPendingLogBySupplierId
+);
+
+// @route   PATCH /api/v1/suppliers/:id
+router.patch(
+  "/:id",
+  authenticationMiddleware.verifyToken,
+  authenticationMiddleware.allowRoles(ROLES.WAREHOUSE_MANAGER),
+  supplierController.updateSupplierStatus
+);
+
+// @route   PUT /api/v1/suppliers/request-change-action/:id
+router.put(
+  "/request-change-action/:id",
+  authenticationMiddleware.verifyToken,
+  authenticationMiddleware.allowRoles(ROLES.WAREHOUSE_STAFF),
+  supplierController.requestChangeAction
+);
+
+
 
 export default router;
