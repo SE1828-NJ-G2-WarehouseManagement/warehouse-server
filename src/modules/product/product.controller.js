@@ -26,6 +26,23 @@ export const getProductById = async (req, res) => {
   }
 };
 
+export const uploadProductImage = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: "No image file provided" });
+    }
+
+    res.status(200).json({
+      message: "Image uploaded successfully",
+      imageUrl: req.file.path,
+      publicId: req.file.filename, 
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+
 export const createProduct = async (req, res) => {
   try {
     let userId;
@@ -41,11 +58,7 @@ export const createProduct = async (req, res) => {
       return res.status(400).json({ message: "User ID not found in token" });
     }
     // Lấy đường dẫn ảnh từ file upload
-    const image = req.file ? req.file.path : undefined;
-    const product = await productService.createProduct(
-      { ...req.body, image },
-      userId
-    );
+    const product = await productService.createProduct(req.body, userId);
     res.status(201).json(product);
   } catch (error) {
     if (error.message === "Product name already exists") {
@@ -70,10 +83,9 @@ export const updateProduct = async (req, res) => {
     } else {
       return res.status(400).json({ message: "User ID not found in token" });
     }
-    const image = req.file ? req.file.path : undefined;
     const updatedProduct = await productService.updateProduct(
       id,
-      { ...req.body, image },
+      req.body,
       userId
     );
     res.status(200).json(updatedProduct);

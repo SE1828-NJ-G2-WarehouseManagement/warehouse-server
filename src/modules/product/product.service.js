@@ -1,6 +1,8 @@
 import Product from "./product.model.js";
 import mongoose from "mongoose";
-import { STATUS } from "../../constant/status.constant.js";
+import { STATUS} from "../../constant/status.constant.js";
+import { ACTION } from "../../constant/action.constant.js";
+
 import Category from "../category/category.model.js";
 import { deleteImage } from "../../config/cloudinary.js";
 
@@ -11,9 +13,9 @@ const createProduct = async (data, userId) => {
   if (!existCategory) throw new Error("Category not found");
   const product = new Product({
     ...data,
-    image: data.image,
+    image: data.image, // image là url từ API upload-image
     status: STATUS.PENDING,
-    action: "INACTIVE",
+    action: ACTION.INACTIVE,
     requestType: "CREATE",
     pendingChanges: null,
     createdBy: userId,
@@ -24,18 +26,18 @@ const createProduct = async (data, userId) => {
 
 const getProducts = async () => {
   return await Product.find()
-    .populate("category")
-    .populate("createdBy")
-    .populate("updatedBy");
+    .populate("category", "name action _id")
+    .populate("createdBy", "email role _id")
+    .populate("updatedBy", "email role _id");
 };
 
 const getProductById = async (id) => {
   if (!mongoose.Types.ObjectId.isValid(id))
     throw new Error("Invalid product ID");
   const product = await Product.findById(id)
-    .populate("category")
-    .populate("createdBy")
-    .populate("updatedBy");
+    .populate("category", "name action _id")
+    .populate("createdBy", "email role _id")
+    .populate("updatedBy", "email role _id");
   if (!product) throw new Error("Product not found");
   return product;
 };
@@ -80,9 +82,11 @@ const updateProduct = async (id, data, userId) => {
   }
   if (allSame) throw new Error("Product already exists");
 
-  const query = { ...data, _id: { $ne: id } };
-  const exist = await Product.findOne(query);
-  if (exist) throw new Error("Product already exists");
+  // Kiểm tra trùng tên với sản phẩm khác
+  if (data.name) {
+    const exist = await Product.findOne({ name: data.name, _id: { $ne: id } });
+    if (exist) throw new Error("Product already exists");
+  }
 
   currentProduct.requestType = "UPDATE";
   currentProduct.status = STATUS.PENDING;
@@ -93,7 +97,7 @@ const updateProduct = async (id, data, userId) => {
     ...(data.storageTemperature && {
       storageTemperature: data.storageTemperature,
     }),
-    ...(data.image && { image: data.image }), 
+    ...(data.image && { image: data.image }),
     ...(data.reason && { reason: data.reason }),
   };
   currentProduct.updatedBy = userId;
@@ -131,7 +135,7 @@ const changeProductAction = async (id, newAction, userId) => {
 };
 
 const getActiveProducts = async () => {
-  return await Product.find({ action: "ACTIVE" })
+  return await Product.find({ action: ACTION.ACTIVE })
     .populate("category", "name action _id")
     .populate("createdBy", "email role _id")
     .populate("updatedBy", "email role _id");
