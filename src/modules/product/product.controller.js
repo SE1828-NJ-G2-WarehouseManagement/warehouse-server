@@ -26,10 +26,26 @@ export const getProductById = async (req, res) => {
   }
 };
 
+export const uploadProductImage = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: "No image file provided" });
+    }
+
+    res.status(200).json({
+      message: "Image uploaded successfully",
+      imageUrl: req.file.path,
+      publicId: req.file.filename, 
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+
 export const createProduct = async (req, res) => {
   try {
     let userId;
-
     if (req.user._id) {
       userId = req.user._id;
     } else if (req.user.email) {
@@ -41,6 +57,7 @@ export const createProduct = async (req, res) => {
     } else {
       return res.status(400).json({ message: "User ID not found in token" });
     }
+    // Lấy đường dẫn ảnh từ file upload
     const product = await productService.createProduct(req.body, userId);
     res.status(201).json(product);
   } catch (error) {
@@ -55,7 +72,6 @@ export const updateProduct = async (req, res) => {
   try {
     const id = req.params.id;
     let userId;
-
     if (req.user._id) {
       userId = req.user._id;
     } else if (req.user.email) {
@@ -104,7 +120,7 @@ export const changeProductAction = async (req, res) => {
     if (!["ACTIVE", "INACTIVE"].includes(action)) {
       return res.status(400).json({ message: "Invalid status" });
     }
-    const updatedProduct = await productService.changeProductStatus(
+    const updatedProduct = await productService.changeProductAction(
       id,
       action,
       userId

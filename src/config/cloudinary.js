@@ -19,6 +19,18 @@ const storage = new CloudinaryStorage({
   },
 });
 
+const productImageStorage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: "warehouse-products",
+    allowed_formats: ["jpg", "jpeg", "png", "gif"],
+    transformation: [{ width: 500, height: 500, crop: "fill" }],
+  },
+});
+
+const uploadProductImage = multer({ storage: productImageStorage });
+
+
 // 3. Create Multer instance
 const upload = multer({
   storage: storage,
@@ -54,4 +66,5 @@ const deleteImage = async (publicId) => {
   }
 };
 
-export { upload, uploadSingle, cloudinary, deleteImage };
+
+export { upload, uploadSingle, cloudinary, deleteImage, uploadProductImage };
