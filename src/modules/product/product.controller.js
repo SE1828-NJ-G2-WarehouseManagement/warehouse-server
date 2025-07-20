@@ -120,7 +120,7 @@ export const changeProductAction = async (req, res) => {
     if (!["ACTIVE", "INACTIVE"].includes(action)) {
       return res.status(400).json({ message: "Invalid status" });
     }
-    const updatedProduct = await productService.changeProductStatus(
+    const updatedProduct = await productService.changeProductAction(
       id,
       action,
       userId

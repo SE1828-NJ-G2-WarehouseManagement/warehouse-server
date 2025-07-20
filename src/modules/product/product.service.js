@@ -149,15 +149,24 @@ const approveProduct = async (id, userId) => {
   if (product.status !== STATUS.PENDING)
     throw new Error("Only pending products can be approved");
 
-  if (
-    product.requestType === "UPDATE" ||
-    product.requestType === "STATUS_CHANGE"
-  ) {
+  if (product.requestType === "STATUS_CHANGE") {
+    // Chỉ duyệt action
+    if (product.pendingChanges && product.pendingChanges.action) {
+      product.action = product.pendingChanges.action;
+    }
+    product.status = STATUS.APPROVED;
+    product.pendingChanges = null;
+    product.requestType = null;
+    product.approveBy = userId;
+    await product.save();
+    return product;
+  }
+
+  if (product.requestType === "UPDATE") {
     if (product.pendingChanges) {
       // Nếu có ảnh mới và đã có ảnh cũ thì xóa ảnh cũ trên Cloudinary
       if (product.pendingChanges.image && product.image) {
         try {
-          // Lấy publicId từ url cloudinary (ví dụ: warehouse-products/abcxyz)
           const oldImageUrl = product.image;
           const publicIdMatch = oldImageUrl.match(
             /warehouse-products\/([^\.\/]+)/
@@ -180,6 +189,7 @@ const approveProduct = async (id, userId) => {
         product.storageTemperature = product.pendingChanges.storageTemperature;
       if (product.pendingChanges.image)
         product.image = product.pendingChanges.image;
+      // Nếu có pendingChanges.action thì cũng cập nhật luôn (trường hợp update kèm action)
       if (product.pendingChanges.action)
         product.action = product.pendingChanges.action;
     }
@@ -213,7 +223,7 @@ const rejectProduct = async (id, userId, note) => {
   ) {
     product.pendingChanges = null;
     product.requestType = null;
-    product.status = STATUS.APPROVED;
+    product.status = STATUS.REJECTED;
     product.rejectedNote = note;
     product.approveBy = userId;
     await product.save();
