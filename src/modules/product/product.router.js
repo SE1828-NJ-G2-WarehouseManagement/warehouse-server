@@ -60,7 +60,7 @@ router.put(
 router.put(
   "/:id/status",
   authenticationMiddleware.verifyToken,
-  authenticationMiddleware.verifyRole(ROLES.WAREHOUSE_MANAGER),
+  authenticationMiddleware.verifyRole(ROLES.WAREHOUSE_STAFF),
   productController.changeProductAction
 );
 
