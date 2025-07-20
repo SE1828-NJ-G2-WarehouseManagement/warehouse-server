@@ -12,7 +12,7 @@ const login = async (req, res) => {
       email,
       role: user.role,
     });
-    return res.json({
+    return res.status(200).json({
       data: {
         email: user.email,
         role: user.role,
@@ -22,10 +22,18 @@ const login = async (req, res) => {
       token,
     });
   } catch (error) {
-    return res.json({
-      data: null,
+
+    if (error.status === 404) {
+      return res.status(error.status).json({
+        data: null,
+        isSuccess: false,
+        message: "Email or password incorrect or have any email existed",
+      });
+    }
+    
+    return res.status(500).json({
       isSuccess: false,
-      message: "Login failed",
+      message: "Server error",
     });
   }
 };
@@ -93,7 +101,7 @@ const changePassword = async (req, res) => {
   try {
     const { newPassword, email } = req.body;
 
-    await userService.changePasswordSetting(newPassword, email);
+    await userService.changePassword(newPassword, email);
 
     return res.status(200).json({
       message: "change password successfully",

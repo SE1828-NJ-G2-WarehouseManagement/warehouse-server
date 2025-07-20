@@ -12,6 +12,7 @@ import expireRouter from './expired/expired.routes.js';
 import outboundOrderRouter from './outboundorder/outboundorder.routes.js';
 import adminRouter from './reports/admin-dashboard/admin.report.route.js';
 import internalTransfersRouter from './internalTransfers/internalTransfers.router.js';
+import reportRouter from './reports/manager_and_staff-dashboard/report.route.js';
 
 const mainRouter = express.Router();
 
@@ -29,6 +30,8 @@ mainRouter.use('/expired', expireRouter);
 mainRouter.use('/outbounds', outboundOrderRouter);
 mainRouter.use('/admin', adminRouter);
 mainRouter.use('/internal-transfers', internalTransfersRouter);
+mainRouter.use('/reports', reportRouter);
+
 
 
 export default mainRouter;
