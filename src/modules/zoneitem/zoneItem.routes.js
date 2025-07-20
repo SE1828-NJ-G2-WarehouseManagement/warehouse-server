@@ -16,7 +16,11 @@ router.post(
   validateSchema(transferBetweenZone),
   zoneItemController.transferBetweenZone
 );
-
+router.get(
+  "/my-warehouse/products",
+  authenticationMiddleware.verifyToken,
+  zoneItemController.getProductsInMyWarehouse
+);
 router.get(
   "/products/active-in-zones",
   authenticationMiddleware.verifyToken,

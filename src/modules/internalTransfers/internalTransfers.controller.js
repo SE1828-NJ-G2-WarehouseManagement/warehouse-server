@@ -3,9 +3,30 @@ import internalTransferService from "./internalTransfers.service.js";
 
 export const getInternalTransfers = async (req, res) => {
   try {
-    const transfers = await internalTransferService.getInternalTransfers();
+    let userId;
+    if (req.user._id) {
+      userId = req.user._id;
+    } else if (req.user.email) {
+      const user = await User.findOne({ email: req.user.email });
+      if (!user) {
+        return res.status(401).json({ message: "User not found" });
+      }
+      userId = user._id;
+    } else {
+      return res.status(400).json({ message: "User ID not found in token" });
+    }
+
+    const transfers = await internalTransferService.getInternalTransfers(
+      userId
+    );
     res.status(200).json(transfers);
   } catch (error) {
+    if (
+      error.message === "User not found" ||
+      error.message === "User must be assigned to a warehouse"
+    ) {
+      return res.status(400).json({ message: error.message });
+    }
     res.status(500).json({ message: error.message });
   }
 };

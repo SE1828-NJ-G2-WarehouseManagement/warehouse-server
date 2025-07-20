@@ -1,5 +1,6 @@
 import e from "express";
 import warehouseService from "./warehouse.service.js";
+import User from "../user/user.model.js";
 
 export const getWarehouses = async (req, res) => {
   try {
@@ -85,6 +86,63 @@ export const changeWarehouseStatus = async (req, res) => {
     }
     if (error.message === "Warehouse not found") {
       return res.status(404).json({ message: error.message });
+    }
+    res.status(500).json({ message: error.message });
+  }
+  
+};
+export const getWarehousesWithZonesCapacity = async (req, res) => {
+  try {
+    let userId;
+    if (req.user._id) {
+      userId = req.user._id;
+    } else if (req.user.email) {
+      const user = await User.findOne({ email: req.user.email });
+      if (!user) {
+        return res.status(401).json({ message: "User not found" });
+      }
+      userId = user._id;
+    } else {
+      return res.status(400).json({ message: "User ID not found in token" });
+    }
+
+    const warehouses = await warehouseService.getWarehousesWithZonesCapacity(
+      userId
+    );
+    res.status(200).json(warehouses);
+  } catch (error) {
+    if (error.message === "User not found") {
+      return res.status(400).json({ message: error.message });
+    }
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const getMyWarehouseWithZonesCapacity = async (req, res) => {
+  try {
+    let userId;
+    if (req.user._id) {
+      userId = req.user._id;
+    } else if (req.user.email) {
+      const user = await User.findOne({ email: req.user.email });
+      if (!user) {
+        return res.status(401).json({ message: "User not found" });
+      }
+      userId = user._id;
+    } else {
+      return res.status(400).json({ message: "User ID not found in token" });
+    }
+
+    const warehouse = await warehouseService.getMyWarehouseWithZonesCapacity(
+      userId
+    );
+    res.status(200).json(warehouse);
+  } catch (error) {
+    if (
+      error.message === "User not found" ||
+      error.message === "User must be assigned to a warehouse"
+    ) {
+      return res.status(400).json({ message: error.message });
     }
     res.status(500).json({ message: error.message });
   }

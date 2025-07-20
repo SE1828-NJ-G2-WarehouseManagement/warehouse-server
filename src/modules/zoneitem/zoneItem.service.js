@@ -5,6 +5,8 @@ import PAGE_SIZE from "../../constant/pageSize.constant.js";
 import { ROLES } from "../../constant/role.constant.js";
 import Item from "../item/item.model.js";
 import Product from "../product/product.model.js";
+import { STATUS } from "../../constant/status.constant.js";
+import { ACTION } from "../../constant/action.constant.js";
 const getItemByZoneId = async (zoneId, user, page) => {
   // Lấy user theo email
   const userCurrent = await User.findOne({ email: user.email });
@@ -172,6 +174,73 @@ const transferBetweenZone = async (
   };
 };
 
+const getProductsInMyWarehouse = async (userId) => {
+  // 1. Lấy thông tin user và warehouse được assign
+  const user = await User.findById(userId).populate("assignedWarehouse");
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  if (!user.assignedWarehouse) {
+    throw new Error("User must be assigned to a warehouse");
+  }
+
+  const warehouseId = user.assignedWarehouse._id;
+
+  // 2. Lấy tất cả zones thuộc warehouse của user
+  const zones = await Zone.find({
+    warehouseId: warehouseId,
+    status: STATUS.ACTIVE,
+  });
+
+  if (zones.length === 0) {
+    return [];
+  }
+
+  const zoneIds = zones.map((zone) => zone._id);
+
+  // 3. Lấy tất cả zoneItems trong các zones này
+  const zoneItems = await ZoneItem.find({
+    zoneId: { $in: zoneIds },
+    quantity: { $gt: 0 }, // Chỉ lấy items có quantity > 0
+  })
+    .populate({
+      path: "itemId",
+      populate: {
+        path: "productId",
+        match: {
+          status: STATUS.APPROVED,
+          action: ACTION.ACTIVE,
+        },
+      },
+    })
+    .populate("zoneId");
+
+  // 4. Filter và format data
+  const productsInWarehouse = zoneItems
+    .filter((zoneItem) => zoneItem.itemId && zoneItem.itemId.productId) // Loại bỏ null products
+    .map((zoneItem) => ({
+      zoneItemId: zoneItem._id,
+      productId: zoneItem.itemId.productId._id,
+      productName: zoneItem.itemId.productId.name,
+      productImage: zoneItem.itemId.productId.image,
+      productDensity: zoneItem.itemId.productId.density,
+      storageTemperature: zoneItem.itemId.productId.storageTemperature,
+      itemId: zoneItem.itemId._id,
+      itemWeights: zoneItem.itemId.weights,
+      itemManufactureDate: zoneItem.itemId.manufactureDate,
+      itemExpiryDate: zoneItem.itemId.expiryDate,
+      zoneId: zoneItem.zoneId._id,
+      zoneName: zoneItem.zoneId.name,
+      zoneTemperature: zoneItem.zoneId.storageTemperature,
+      quantity: zoneItem.quantity,
+      warehouseId: user.assignedWarehouse._id,
+      warehouseName: user.assignedWarehouse.name,
+    }))
+    .sort((a, b) => a.productName.localeCompare(b.productName)); // Sort theo tên product
+
+  return productsInWarehouse;
+};
 
 const getAllActiveProductsInZones = async () => {
   const zoneItems = await ZoneItem.find().populate({
@@ -231,4 +300,5 @@ export default {
   transferBetweenZone,
   getAllActiveProductsInZones,
   getAllProductsInZones,
+  getProductsInMyWarehouse,
 };

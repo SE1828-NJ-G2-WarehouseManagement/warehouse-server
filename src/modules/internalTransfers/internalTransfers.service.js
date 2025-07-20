@@ -95,8 +95,23 @@ const createInternalTransfer = async (data, userId) => {
   return await internalTransfer.save();
 };
 
-const getInternalTransfers = async () => {
-  return await InternalTransfer.find()
+const getInternalTransfers = async (userId) => {
+  // 1. Lấy thông tin user để có assignedWarehouse
+  const user = await User.findById(userId).populate("assignedWarehouse");
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  if (!user.assignedWarehouse) {
+    throw new Error("User must be assigned to a warehouse");
+  }
+
+  const userWarehouseId = user.assignedWarehouse._id;
+
+  // 2. Chỉ lấy những internal transfers có receiver.warehouseId trùng với warehouse của user
+  return await InternalTransfer.find({
+    "receiver.warehouseId": userWarehouseId,
+  })
     .populate("sourceWarehouseId", "name address")
     .populate("sourceZoneId", "name storageTemperature")
     .populate({
@@ -105,7 +120,7 @@ const getInternalTransfers = async () => {
         path: "itemId",
         populate: {
           path: "productId",
-          select: "name density",
+          select: "name density image",
         },
       },
     })
@@ -115,6 +130,7 @@ const getInternalTransfers = async () => {
     .populate("approvedBy", "email firstName lastName")
     .sort({ createdAt: -1 });
 };
+
 
 const getInternalTransferById = async (id) => {
   if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -126,12 +142,19 @@ const getInternalTransferById = async (id) => {
     .populate("sourceZoneId", "name storageTemperature")
     .populate({
       path: "items.zoneItemId",
-      populate: {
-        path: "itemId zoneId",
-        populate: {
-          path: "productId",
+      populate: [
+        {
+          path: "itemId",
+          populate: {
+            path: "productId",
+            select: "name density image",
+          },
         },
-      },
+        {
+          path: "zoneId", 
+          select: "name storageTemperature",
+        },
+      ],
     })
     .populate("receiver.warehouseId", "name address")
     .populate("receiver.zoneId", "name storageTemperature")

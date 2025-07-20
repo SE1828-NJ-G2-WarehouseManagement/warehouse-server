@@ -155,6 +155,7 @@ const approveProduct = async (id, userId) => {
       product.action = product.pendingChanges.action;
     }
     product.status = STATUS.APPROVED;
+    product.action = ACTION.ACTIVE;
     product.pendingChanges = null;
     product.requestType = null;
     product.approveBy = userId;
@@ -194,6 +195,7 @@ const approveProduct = async (id, userId) => {
         product.action = product.pendingChanges.action;
     }
     product.status = STATUS.APPROVED;
+    product.action = ACTION.ACTIVE;
     product.pendingChanges = null;
     product.requestType = null;
     product.approveBy = userId;
@@ -222,6 +224,7 @@ const rejectProduct = async (id, userId, note) => {
     product.requestType === "STATUS_CHANGE"
   ) {
     product.pendingChanges = null;
+      product.action = ACTION.ACTIVE;
     product.requestType = null;
     product.status = STATUS.REJECTED;
     product.rejectedNote = note;

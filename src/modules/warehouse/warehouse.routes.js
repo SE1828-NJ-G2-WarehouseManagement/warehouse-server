@@ -22,7 +22,16 @@ router.get(
   authenticationMiddleware.verifyToken,
   warehouseController.getAllWarehouseCapacity
 );
-
+router.get(
+  "/zones-capacity",
+  authenticationMiddleware.verifyToken,
+  warehouseController.getWarehousesWithZonesCapacity
+);
+router.get(
+  "/my-warehouse/zones-capacity",
+  authenticationMiddleware.verifyToken,
+  warehouseController.getMyWarehouseWithZonesCapacity
+);
 // @route   GET /api/v1/warehouses/:id
 // kiểm tra quyền trong service
 router.get(
