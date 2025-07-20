@@ -7,7 +7,7 @@ const isValidDDMMYYYY = (dateStr) => {
 
 const getReports = async (req, res) => {
     try {
-        const {date} = req.body;
+        const {date} = req.query;
 
         // Validate date format if provided
         if (date && !isValidDDMMYYYY(date)) {
@@ -35,7 +35,7 @@ const getReports = async (req, res) => {
         
     } catch (error) {
         console.log(error);
-        return res.status(error.status).send({
+        return res.status(500).send({
             isSuccess: false,
             message: 'Server error'
         })

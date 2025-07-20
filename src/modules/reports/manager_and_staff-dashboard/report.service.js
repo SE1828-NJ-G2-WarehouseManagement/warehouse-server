@@ -6,8 +6,10 @@ import Zone from "../../zone/zone.model.js";
 
 const getReports = async (date) => {
   try {
-    const year = date.split("/")[2];
-    const totalAnalysis = await getTotalStatsByYear(year);
+    const PREFIX_DATE = "/";
+    const GET_YEAR = 2;
+    const year = date.split(PREFIX_DATE)[GET_YEAR];
+    const totalAnalysis = await getTotalStatsByDate(date);
     const monthlyAnalysis = await getMonthlyStatsOfYear(year);
     return {
         totalAnalysis,
@@ -19,20 +21,20 @@ const getReports = async (date) => {
   }
 };
 
-const getTotalStatsByYear = async (year) => {
-  console.log(year);
-
+const getTotalStatsByDate = async (date) => {
   try {
-    const matchYear = {
-      createdAt: { $lte: new Date(`${year}-12-31T23:59:59.999Z`) },
+    const [day, month, year] = date.split('/');
+
+    const match = {
+      createdAt: { $lte: new Date(`${year}-${month}-${day}T23:59:59.999Z`) },
     };
 
     const [products, imports, exports, expired, zones] = await Promise.all([
-      Product.countDocuments(matchYear),
-      InboundOrder.countDocuments(matchYear),
-      OutboundOrder.countDocuments(matchYear),
-      Expired.countDocuments(matchYear),
-      Zone.countDocuments(matchYear),
+      Product.countDocuments(match),
+      InboundOrder.countDocuments(match),
+      OutboundOrder.countDocuments(match),
+      Expired.countDocuments(match),
+      Zone.countDocuments(match),
     ]);
 
     return {
@@ -90,4 +92,4 @@ const getMonthlyStatsOfYear = async (year) => {
   }
 };
 
-export { getReports, getTotalStatsByYear };
+export { getReports };
