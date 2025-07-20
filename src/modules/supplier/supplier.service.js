@@ -530,7 +530,6 @@ const getListSuppliersV2 = async (
   for (const supplier of suppliers) {
     const log = await SupplierLog.findOne({
       supplierId: supplier._id,
-      status: STATUS.PENDING,
     })
       .populate("createdBy")
       .sort({ createdAt: -1 })
