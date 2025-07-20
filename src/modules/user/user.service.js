@@ -24,7 +24,9 @@ const login = async (email, password) => {
     const MESSAGE_NOT_MATH_PASSWORD = "Wrong password";
 
     if (!user) {
-      throw new Error(MESSAGE_NOT_FOUND);
+      const err =  new Error(MESSAGE_NOT_FOUND);
+      err.status = 404;
+      throw err;
     }
 
     const isValidPassword = await JwtUtils.comparePassword(
@@ -33,7 +35,9 @@ const login = async (email, password) => {
     );
 
     if (!isValidPassword) {
-      throw new Error(MESSAGE_NOT_MATH_PASSWORD);
+      const err = new Error(MESSAGE_NOT_MATH_PASSWORD);  
+      err.status = 404;
+      throw err;
     }
 
     return user;
