@@ -9,11 +9,25 @@ const internalTransferSchema = new Schema(
       ref: "Warehouse",
       required: true,
     },
-    zoneItemId: {
+    sourceZoneId: {
       type: Schema.Types.ObjectId,
-      ref: "ZoneItem",
+      ref: "Zone",
       required: true,
     },
+    items: [
+      {
+        zoneItemId: {
+          type: Schema.Types.ObjectId,
+          ref: "ZoneItem",
+          required: true,
+        },
+        quantity: {
+          type: Number,
+          required: true,
+          min: 1,
+        },
+      },
+    ],
     receiver: {
       warehouseId: {
         type: Schema.Types.ObjectId,
@@ -23,13 +37,8 @@ const internalTransferSchema = new Schema(
       zoneId: {
         type: Schema.Types.ObjectId,
         ref: "Zone",
-        required: true,
+        default: null,
       },
-    },
-    quantity: {
-      type: Number,
-      required: true,
-      min: 1,
     },
     status: {
       type: String,

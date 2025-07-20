@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { STATUS } from "../../constant/status.constant.js";
 import mongoose from "mongoose";
 
 const objectIdSchema = z
@@ -8,52 +7,60 @@ const objectIdSchema = z
     message: "Invalid ObjectId format",
   });
 
-const internalTransferBase = z
+// Schema cho tạo mới
+export const createInternalTransfer = z
   .object({
-    sourceWarehouseId: objectIdSchema,
-    zoneItemId: objectIdSchema,
+    items: z
+      .array(
+        z
+          .object({
+            zoneItemId: objectIdSchema,
+            quantity: z
+              .number({
+                required_error: "Quantity is required",
+              })
+              .int("Quantity must be an integer")
+              .min(1, "Quantity must be at least 1"),
+          })
+          .strict()
+      )
+      .min(1, "At least one item is required")
+      .max(50, "Maximum 50 items allowed"),
     receiver: z
       .object({
         warehouseId: objectIdSchema,
-        zoneId: objectIdSchema,
       })
       .strict(),
-    quantity: z
-      .number({
-        required_error: "Quantity is required",
-      })
-      .int("Quantity must be an integer")
-      .min(1, "Quantity must be at least 1"),
-    reason: z
-      .string({
-        required_error: "Reason is required",
-      })
-      .min(1, "Reason cannot be empty")
-      .max(500, "Reason cannot exceed 500 characters"),
-    status: z
-      .enum([STATUS.PENDING, STATUS.APPROVED, STATUS.REJECTED])
-      .default(STATUS.PENDING),
-    rejectedNote: z.string().optional(),
   })
-  .strict()
-  .refine((data) => data.sourceWarehouseId !== data.receiver.warehouseId, {
-    message: "Source warehouse and destination warehouse must be different",
-    path: ["receiver", "warehouseId"],
-  });
+  .strict();
 
-export const createInternalTransfer = internalTransferBase.omit({
-  status: true,
-  rejectedNote: true,
-});
-
-export const updateInternalTransfer = internalTransferBase
-  .omit({
-    sourceWarehouseId: true,
-    zoneItemId: true,
-    status: true,
-    rejectedNote: true,
+// Schema cho cập nhật
+export const updateInternalTransfer = z
+  .object({
+    items: z
+      .array(
+        z
+          .object({
+            zoneItemId: objectIdSchema,
+            quantity: z
+              .number()
+              .int("Quantity must be an integer")
+              .min(1, "Quantity must be at least 1"),
+          })
+          .strict()
+      )
+      .min(1, "At least one item is required")
+      .max(50, "Maximum 50 items allowed")
+      .optional(),
+    receiver: z
+      .object({
+        warehouseId: objectIdSchema.optional(),
+        zoneId: objectIdSchema.optional(),
+      })
+      .strict()
+      .optional(),
   })
-  .partial();
+  .strict();
 
 export const approveInternalTransfer = z
   .object({
