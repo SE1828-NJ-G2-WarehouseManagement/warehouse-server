@@ -21,20 +21,26 @@ const getZoneWithoutPagination = async (user) => {
 };
 
 // Warehouse Manager and Staff can only view zones of their assigned warehouse
-const getZones = async (user, page) => {
+const getZones = async (user, page, name, status) => {
   const skip = (page - 1) * PAGE_SIZE;
-
-  // lấy user theo email
   const userCurrent = await User.findOne({ email: user.email });
   if (!userCurrent) {
     throw new Error("User not found");
   }
-  // lọc theo assignedWarehouse
-  const filter = { warehouseId: userCurrent.assignedWarehouse };
+  const filter = {
+    warehouseId: userCurrent.assignedWarehouse,
+  };
+  if (name) {
+    filter.name = { $regex: name, $options: "i" };
+  }
+  if (status) {
+    filter.status = status;
+  }
   const [data, total] = await Promise.all([
     Zone.find(filter).populate("warehouseId").skip(skip).limit(PAGE_SIZE),
     Zone.countDocuments(filter),
   ]);
+
   return {
     data,
     total,
@@ -43,6 +49,7 @@ const getZones = async (user, page) => {
     totalPages: Math.ceil(total / PAGE_SIZE),
   };
 };
+
 
 const getZoneCapacity = async (user) => {
   // Lấy user theo email
