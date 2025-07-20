@@ -243,12 +243,24 @@ const updateInternalTransfer = async (id, data, userId) => {
   return await transfer.save();
 };
 
-const approveInternalTransfer = async (id, userId) => {
+const approveInternalTransfer = async (id, userId, destinationZoneId) => {
   if (!mongoose.Types.ObjectId.isValid(id)) {
     throw new Error("Invalid internal transfer ID");
   }
 
-  const transfer = await InternalTransfer.findById(id);
+  const transfer = await InternalTransfer.findById(id)
+    .populate("sourceZoneId")
+    .populate("receiver.warehouseId")
+    .populate({
+      path: "items.zoneItemId",
+      populate: {
+        path: "itemId",
+        populate: {
+          path: "productId",
+        },
+      },
+    });
+
   if (!transfer) {
     throw new Error("Internal transfer not found");
   }
@@ -259,10 +271,111 @@ const approveInternalTransfer = async (id, userId) => {
     );
   }
 
-  // TODO: Thực hiện logic chuyển kho (trừ quantity từ source, cộng vào destination)
+  // 1. Kiểm tra destination zone có tồn tại và thuộc đúng warehouse không
+  const destinationZone = await Zone.findById(destinationZoneId);
+  if (!destinationZone) {
+    throw new Error("Destination zone not found");
+  }
 
+  if (!destinationZone.warehouseId.equals(transfer.receiver.warehouseId._id)) {
+    throw new Error("Destination zone must belong to the receiver warehouse");
+  }
+
+  // 2. Kiểm tra tất cả items có tồn tại và đủ quantity không
+  const sourceZoneItems = [];
+  for (const transferItem of transfer.items) {
+    const sourceZoneItem = await ZoneItem.findById(transferItem.zoneItemId);
+    if (!sourceZoneItem) {
+      throw new Error(`Source zone item ${transferItem.zoneItemId} not found`);
+    }
+    if (sourceZoneItem.quantity < transferItem.quantity) {
+      throw new Error(
+        `Not enough quantity for item ${transferItem.zoneItemId}. Available: ${sourceZoneItem.quantity}, Requested: ${transferItem.quantity}`
+      );
+    }
+    sourceZoneItems.push({
+      sourceZoneItem,
+      transferQuantity: transferItem.quantity,
+      item: transferItem.zoneItemId.itemId,
+      product: transferItem.zoneItemId.itemId.productId,
+    });
+  }
+
+  // 3. Kiểm tra nhiệt độ tất cả products có phù hợp với destination zone không
+  for (const { product } of sourceZoneItems) {
+    const isTempCompatible =
+      destinationZone.storageTemperature.min >=
+        product.storageTemperature.min &&
+      destinationZone.storageTemperature.max <= product.storageTemperature.max;
+
+    if (!isTempCompatible) {
+      throw new Error(
+        `Zone temperature not compatible with product ${product.name}`
+      );
+    }
+  }
+
+  // 4. Tính tổng volume cần chuyển
+  let totalVolumeToTransfer = 0;
+  for (const { item, product, transferQuantity } of sourceZoneItems) {
+    const itemVolume = item.weights / product.density;
+    totalVolumeToTransfer += itemVolume * transferQuantity;
+  }
+
+  // 5. Kiểm tra sức chứa destination zone
+  const availableCapacity =
+    destinationZone.totalCapacity - destinationZone.currentCapacity;
+  if (availableCapacity < totalVolumeToTransfer) {
+    throw new Error(
+      `Destination zone does not have enough capacity. Available: ${availableCapacity}, Required: ${totalVolumeToTransfer}`
+    );
+  }
+
+  // 6. Thực hiện chuyển kho (trừ từ source, cộng vào destination)
+  const sourceZone = transfer.sourceZoneId;
+
+  for (const { sourceZoneItem, transferQuantity, item } of sourceZoneItems) {
+    // Trừ quantity từ source zone
+    sourceZoneItem.quantity -= transferQuantity;
+
+    if (sourceZoneItem.quantity <= 0) {
+      // Nếu quantity về 0, xóa khỏi source zone
+      await ZoneItem.deleteOne({ _id: sourceZoneItem._id });
+    } else {
+      // Ngược lại update quantity
+      await sourceZoneItem.save();
+    }
+
+    // Cộng vào destination zone (tạo mới nếu chưa có)
+    let destinationZoneItem = await ZoneItem.findOne({
+      zoneId: destinationZoneId,
+      itemId: item._id,
+    });
+
+    if (destinationZoneItem) {
+      destinationZoneItem.quantity += transferQuantity;
+    } else {
+      destinationZoneItem = new ZoneItem({
+        zoneId: destinationZoneId,
+        itemId: item._id,
+        quantity: transferQuantity,
+      });
+    }
+
+    await destinationZoneItem.save();
+  }
+
+  // 7. Cập nhật sức chứa của 2 zones
+  sourceZone.currentCapacity -= totalVolumeToTransfer;
+  destinationZone.currentCapacity += totalVolumeToTransfer;
+
+  await sourceZone.save();
+  await destinationZone.save();
+
+  // 8. Cập nhật trạng thái transfer
   transfer.status = STATUS.APPROVED;
   transfer.approvedBy = userId;
+  transfer.receiver.zoneId = destinationZoneId; // Lưu zone đích đã chọn
 
   return await transfer.save();
 };

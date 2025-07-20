@@ -12,7 +12,7 @@ const internalTransferSchema = new Schema(
     sourceZoneId: {
       type: Schema.Types.ObjectId,
       ref: "Zone",
-      required: true,
+      required: false,
     },
     items: [
       {

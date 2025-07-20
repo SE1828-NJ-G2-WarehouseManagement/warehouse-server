@@ -109,10 +109,12 @@ export const approveInternalTransfer = async (req, res) => {
     } else {
       return res.status(400).json({ message: "User ID not found in token" });
     }
+    const destinationZoneId = req.body.zoneId;
 
     const transfer = await internalTransferService.approveInternalTransfer(
       id,
-      userId
+      userId,
+      destinationZoneId
     );
     res.status(200).json(transfer);
   } catch (error) {

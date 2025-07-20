@@ -64,7 +64,7 @@ export const updateInternalTransfer = z
 
 export const approveInternalTransfer = z
   .object({
-    rejectedNote: z.string().optional(),
+    zoneId: objectIdSchema,
   })
   .strict();
 
