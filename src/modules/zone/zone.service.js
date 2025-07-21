@@ -37,7 +37,7 @@ const getZones = async (user, page, name, status) => {
     filter.status = status;
   }
   const [data, total] = await Promise.all([
-    Zone.find(filter).populate("warehouseId").skip(skip).limit(PAGE_SIZE),
+    Zone.find(filter).populate("warehouseId").sort({ createdAt: -1 }).skip(skip).limit(PAGE_SIZE),
     Zone.countDocuments(filter),
   ]);
 
