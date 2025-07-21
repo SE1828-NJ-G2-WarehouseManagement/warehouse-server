@@ -4,6 +4,7 @@ import { STATUS } from "../../constant/status.constant.js";
 import mongoose from "mongoose";
 import { ROLES } from "../../constant/role.constant.js";
 import User from "../user/user.model.js";
+import Zone from "../zone/zone.model.js";
 
 const createWarehouse = async (data) => {
   // check existing warehouse
@@ -275,6 +276,146 @@ const changeWarehouseStatus = async (id, status) => {
   return await warehouse.save();
 };
 
+const getWarehousesWithZonesCapacity = async (userId) => {
+  // 1. Vẫn lấy user để validate (optional)
+  const user = await User.findById(userId);
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  // 2. Lấy TẤT CẢ warehouses - KHÔNG check role
+  const warehouses = await Warehouse.find({ status: STATUS.ACTIVE })
+    .select("name address currentCapacity totalCapacity status")
+    .sort({ name: 1 });
+
+  // 3. Lấy zones cho từng warehouse
+  const warehousesWithZones = await Promise.all(
+    warehouses.map(async (warehouse) => {
+      const zones = await Zone.find({
+        warehouseId: warehouse._id,
+        status: STATUS.ACTIVE,
+      })
+        .select("name storageTemperature currentCapacity totalCapacity status")
+        .sort({ name: 1 });
+
+      // Tính tổng capacity của warehouse từ zones
+      const totalZoneCapacity = zones.reduce(
+        (sum, zone) => sum + zone.totalCapacity,
+        0
+      );
+      const currentZoneCapacity = zones.reduce(
+        (sum, zone) => sum + zone.currentCapacity,
+        0
+      );
+
+      return {
+        warehouseId: warehouse._id,
+        warehouseName: warehouse.name,
+        warehouseAddress: warehouse.address,
+        warehouseStatus: warehouse.status,
+        warehouseCapacity: {
+          current: currentZoneCapacity,
+          total: totalZoneCapacity,
+          percentage:
+            totalZoneCapacity > 0
+              ? Math.round((currentZoneCapacity / totalZoneCapacity) * 100)
+              : 0,
+          available: totalZoneCapacity - currentZoneCapacity,
+        },
+        totalZones: zones.length,
+        zones: zones.map((zone) => ({
+          zoneId: zone._id,
+          zoneName: zone.name,
+          storageTemperature: zone.storageTemperature,
+          zoneStatus: zone.status,
+          capacity: {
+            current: zone.currentCapacity,
+            total: zone.totalCapacity,
+            percentage:
+              zone.totalCapacity > 0
+                ? Math.round((zone.currentCapacity / zone.totalCapacity) * 100)
+                : 0,
+            available: zone.totalCapacity - zone.currentCapacity,
+          },
+        })),
+      };
+    })
+  );
+
+  return warehousesWithZones;
+};
+const getMyWarehouseWithZonesCapacity = async (userId) => {
+  // 1. Lấy thông tin user để có assignedWarehouse
+  const user = await User.findById(userId).populate("assignedWarehouse");
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  if (!user.assignedWarehouse) {
+    throw new Error("User must be assigned to a warehouse");
+  }
+
+  // 2. Lấy warehouse được assigned (chỉ nếu active)
+  const warehouse = await Warehouse.findOne({
+    _id: user.assignedWarehouse._id,
+    status: STATUS.ACTIVE,
+  }).select("name address currentCapacity totalCapacity status");
+
+  if (!warehouse) {
+    throw new Error("Assigned warehouse not found or inactive");
+  }
+
+  // 3. Lấy zones của warehouse này
+  const zones = await Zone.find({
+    warehouseId: warehouse._id,
+    status: STATUS.ACTIVE,
+  })
+    .select("name storageTemperature currentCapacity totalCapacity status")
+    .sort({ name: 1 });
+
+  // 4. Tính tổng capacity của warehouse từ zones
+  const totalZoneCapacity = zones.reduce(
+    (sum, zone) => sum + zone.totalCapacity,
+    0
+  );
+  const currentZoneCapacity = zones.reduce(
+    (sum, zone) => sum + zone.currentCapacity,
+    0
+  );
+
+  // 5. Return warehouse với zones info
+  return {
+    warehouseId: warehouse._id,
+    warehouseName: warehouse.name,
+    warehouseAddress: warehouse.address,
+    warehouseStatus: warehouse.status,
+    warehouseCapacity: {
+      current: currentZoneCapacity,
+      total: totalZoneCapacity,
+      percentage:
+        totalZoneCapacity > 0
+          ? Math.round((currentZoneCapacity / totalZoneCapacity) * 100)
+          : 0,
+      available: totalZoneCapacity - currentZoneCapacity,
+    },
+    totalZones: zones.length,
+    zones: zones.map((zone) => ({
+      zoneId: zone._id,
+      zoneName: zone.name,
+      storageTemperature: zone.storageTemperature,
+      zoneStatus: zone.status,
+      capacity: {
+        current: zone.currentCapacity,
+        total: zone.totalCapacity,
+        percentage:
+          zone.totalCapacity > 0
+            ? Math.round((zone.currentCapacity / zone.totalCapacity) * 100)
+            : 0,
+        available: zone.totalCapacity - zone.currentCapacity,
+      },
+    })),
+  };
+};
 export default {
   createWarehouse,
   getWarehouses,
@@ -282,4 +423,6 @@ export default {
   getAllWarehouseCapacity,
   updateWarehouse,
   changeWarehouseStatus,
+  getWarehousesWithZonesCapacity,
+  getMyWarehouseWithZonesCapacity,
 };
