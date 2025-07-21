@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import { Schema } from "mongoose";
 import Item from "../item/item.model.js";
 import Zone from "../zone/zone.model.js";
+import { STATUS } from "../../constant/status.constant.js";
 const zoneItemSchema = new Schema(
   {
     itemId: {
@@ -18,6 +19,11 @@ const zoneItemSchema = new Schema(
       type: Number,
       required: true,
       default: 0,
+    },
+    status: {
+      type: String,
+      enum: [STATUS.ACTIVE, STATUS.INACTIVE],
+      default: STATUS.ACTIVE,
     },
   },
   { timestamps: true }
