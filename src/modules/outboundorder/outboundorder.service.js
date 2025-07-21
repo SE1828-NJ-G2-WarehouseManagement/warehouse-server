@@ -4,7 +4,7 @@ import User from "../user/user.model.js";
 import ZoneItem from "../zoneitem/zoneItem.model.js";
 
 const createOutboundOrder = async (data, userId) => {
-  const { customerId, signed, items, quantity } = data;
+  const { customerId, items, quantity } = data;
 
   // Kiểm tra customer
   const customer = await Customer.findById(customerId);
@@ -27,15 +27,38 @@ const createOutboundOrder = async (data, userId) => {
 
   // Trừ số lượng trong zoneitem
   for (const item of items) {
-    const zoneItem = await ZoneItem.findById(item.zoneItem);
+    const zoneItem = await ZoneItem.findById(item.zoneItem)
+      .populate({
+        path: "itemId",
+        populate: { path: "productId", model: "Product" }, 
+      })
+      .populate("zoneId"); 
+    const itemData = zoneItem.itemId;
+    const productData = itemData.productId;
+    const zone = zoneItem.zoneId;
+
+    const weights = itemData.weights || 0;
+    const density = productData.density || 1;
+    const quantitytoExport = item.quantity;
+    const Volume = (weights / density) * quantitytoExport;
+
+    zone.currentCapacity -= Volume;
+    await zone.save();
+    console.log(weights, density, quantitytoExport, Volume);
+
     zoneItem.quantity -= item.quantity;
-    await zoneItem.save();
+    if (zoneItem.quantity <= 0) {
+      // Nếu số lượng về 0 hoặc nhỏ hơn, xóa khỏi zone
+      await ZoneItem.deleteOne({ _id: zoneItem._id });
+    } else {
+      // Ngược lại thì chỉ update lại số lượng
+      await zoneItem.save();
+    }
   }
 
   // Tạo outbound order
   const outboundOrder = await OutboundOrder.create({
     customerId,
-    signed,
     items,
     quantity,
     createBy: userId,
