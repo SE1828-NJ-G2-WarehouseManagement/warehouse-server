@@ -229,7 +229,7 @@ const getProductsInMyWarehouse = async (userId) => {
       itemId: zoneItem.itemId._id,
       itemWeights: zoneItem.itemId.weights,
       itemManufactureDate: zoneItem.itemId.manufactureDate,
-      itemExpiryDate: zoneItem.itemId.expiryDate,
+      itemExpiryDate: zoneItem.itemId.expiredDate,
       zoneId: zoneItem.zoneId._id,
       zoneName: zoneItem.zoneId.name,
       zoneTemperature: zoneItem.zoneId.storageTemperature,
