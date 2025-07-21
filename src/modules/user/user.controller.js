@@ -54,7 +54,7 @@ const register = async (req, res) => {
       return res.status(400).json({
         data: null,
         isSuccess: false,
-        message: "User has existed",
+        message: "Email has existed",
       });
     }
     return res.status(500).json({
@@ -161,14 +161,9 @@ const viewProfile = async (req, res) => {
 const updateProfile = async (req, res) => {
   try {
     const { email, username, phone, firstName, lastName } = req.body;
-    console.log(`======= update ======`);
-    console.log(req.body);
-
-    
 
     // Get avatar URL from uploaded file if exists  
-    const avatar = req.file ? req.file.path : undefined;
-    
+    const avatar = req.file ? req.file.path : null;
 
     const updatedUser = await userService.updateProfile(
       email,
@@ -185,9 +180,8 @@ const updateProfile = async (req, res) => {
       data: updatedUser,
     });
   } catch (error) {
-    console.log("err:", JSON.stringify(error, null, 2));
-    return res.status(500).json({
-      message: "Update profile failed",
+    return res.status(error.status || 500).json({
+      message: error.message || "Update profile failed",
       isSuccess: false,
     });
   }

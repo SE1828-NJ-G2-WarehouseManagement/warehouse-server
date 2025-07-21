@@ -24,7 +24,7 @@ const login = async (email, password) => {
     const MESSAGE_NOT_MATH_PASSWORD = "Wrong password";
 
     if (!user) {
-      const err =  new Error(MESSAGE_NOT_FOUND);
+      const err = new Error(MESSAGE_NOT_FOUND);
       err.status = 404;
       throw err;
     }
@@ -35,7 +35,7 @@ const login = async (email, password) => {
     );
 
     if (!isValidPassword) {
-      const err = new Error(MESSAGE_NOT_MATH_PASSWORD);  
+      const err = new Error(MESSAGE_NOT_MATH_PASSWORD);
       err.status = 404;
       throw err;
     }
@@ -131,13 +131,13 @@ const changePassword = async (password, email) => {
 
 const changePasswordUser = async (currentPassword, newPassword, email) => {
   try {
-    const userFound = await User.findOne({ email });    
+    const userFound = await User.findOne({ email });
     if (!userFound) {
       return {
         isSuccess: false,
         message: "User not found",
       };
-    }   
+    }
     const isValidPassword = await JwtUtils.comparePassword(
       currentPassword,
       userFound.password
@@ -147,7 +147,7 @@ const changePasswordUser = async (currentPassword, newPassword, email) => {
         isSuccess: false,
         message: "Current password is incorrect",
       };
-    } 
+    }
     const hashedPassword = await JwtUtils.hashPassword(newPassword);
     userFound.password = hashedPassword;
     await userFound.save();
@@ -162,7 +162,7 @@ const changePasswordUser = async (currentPassword, newPassword, email) => {
       message: "An error occurred while changing password",
     };
   }
-};  
+};
 
 const viewProfile = async (email) => {
   try {
@@ -179,12 +179,29 @@ const viewProfile = async (email) => {
   }
 };
 
-const updateProfile = async (email, username, phone, avatar, firstName, lastName) => {
+const updateProfile = async (
+  email,
+  username,
+  phone,
+  avatar,
+  firstName,
+  lastName
+) => {
   try {
-    const userFound = await User.findOne({ email });    
-
+    // Find the user by email
+    const userFound = await User.findOne({ email });
     if (!userFound) {
-      throw new Error("User not found");
+      const err = new Error("User not found");
+      err.status = 404;
+      throw err;
+    }
+
+    // Check for existing phone
+    const userFoundByPhone = await User.findOne({ phone });
+    if (userFoundByPhone) {
+      const err = new Error("Phone has existed");
+      err.status = 400;
+      throw err;
     }
 
     // If there's a new avatar and user has an existing avatar, delete the old one
@@ -197,10 +214,9 @@ const updateProfile = async (email, username, phone, avatar, firstName, lastName
           await deleteImage(publicId);
         }
       } catch (error) {
-        console.error('Error deleting old avatar:', error);
+        console.error("Error deleting old avatar:", error);
       }
     }
-
 
     userFound.username = username;
     userFound.phone = phone;
@@ -212,56 +228,57 @@ const updateProfile = async (email, username, phone, avatar, firstName, lastName
     const updatedUser = await userFound.save();
 
     return updatedUser;
-  } catch(error) {
-    console.log(error);
+  } catch (error) {
+    error.status = error.status || 500;
     throw error;
   }
-}
+};
 
 const getAllUser = async () => {
   try {
     const listUser = await User.find({
-      role: { $ne: ROLES.ADMIN_WAREHOUSE }
-    }).select('-password')
-    .populate('assignedWarehouse', 'name');
+      role: { $ne: ROLES.ADMIN_WAREHOUSE },
+    })
+      .select("-password")
+      .populate("assignedWarehouse", "name");
     return listUser;
   } catch (error) {
     throw error;
   }
-}
+};
 
 const getAllManagerAvailable = async () => {
   try {
     const listManager = await User.find({
-      role: {$eq: ROLES.WAREHOUSE_MANAGER},
-      assignedWarehouse: {$eq: null}
-    }).select('-password');
+      role: { $eq: ROLES.WAREHOUSE_MANAGER },
+      assignedWarehouse: { $eq: null },
+    }).select("-password");
 
     return listManager;
   } catch (error) {
     throw error;
   }
-}
+};
 
 const getUserById = async (id) => {
   try {
-    const user = await User.findById(id).select('-password');
+    const user = await User.findById(id).select("-password");
     return user;
   } catch (error) {
     throw error;
   }
-}
+};
 
 const getAllStaffAvailable = async () => {
   try {
     // Get all staff users
     const staffs = await User.find({
-      role: ROLES.WAREHOUSE_STAFF
-    }).select('-password');
+      role: ROLES.WAREHOUSE_STAFF,
+    }).select("-password");
 
     // Get all active warehouses
     const warehouses = await Warehouse.find({
-      status: STATUS.ACTIVE
+      status: STATUS.ACTIVE,
     });
 
     // Get all staff IDs that are already assigned to warehouses
@@ -270,15 +287,15 @@ const getAllStaffAvailable = async () => {
     }, []);
 
     // Filter out staff that are already assigned
-    const staffsAvailable = staffs.filter(staff => 
-      !assignedStaffIds.includes(staff._id.toString())
+    const staffsAvailable = staffs.filter(
+      (staff) => !assignedStaffIds.includes(staff._id.toString())
     );
 
     return staffsAvailable;
   } catch (error) {
     throw error;
   }
-}
+};
 
 const deleteUserByEmail = async (email) => {
   try {
@@ -291,7 +308,7 @@ const deleteUserByEmail = async (email) => {
   } catch (error) {
     throw error;
   }
-}
+};
 
 export {
   login,
@@ -306,5 +323,5 @@ export {
   getAllStaffAvailable,
   getUserById,
   deleteUserByEmail,
-  changePasswordUser
+  changePasswordUser,
 };
