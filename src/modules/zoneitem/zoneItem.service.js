@@ -24,7 +24,11 @@ const getItemByZoneId = async (zoneId, user, page) => {
     );
   }
   const skip = (page - 1) * PAGE_SIZE;
-  const items = await ZoneItem.find({ zoneId: zone._id })
+  const items = await ZoneItem.find({
+    zoneId: zone._id,
+    status: STATUS.ACTIVE,
+    quantity: { $gt: 0 },
+  })
     .populate({
       path: "itemId",
       populate: {
@@ -86,8 +90,6 @@ const transferBetweenZone = async (
     throw new Error("Zones must be in the same warehouse");
   }
 
-
-
   // 3.Source zone và destination zone phải thuộc warehouse được phân công cho user
   if (!sourceZone.warehouseId.equals(userCurrent.assignedWarehouse)) {
     throw new Error("You are not allowed to operate in this warehouse");
@@ -138,12 +140,11 @@ const transferBetweenZone = async (
   // 8. Trừ số lượng source zone
   sourceZoneItem.quantity -= quantity;
   if (sourceZoneItem.quantity <= 0) {
-    // Nếu số lượng về 0 hoặc nhỏ hơn, xóa khỏi zone
-    await ZoneItem.deleteOne({ _id: sourceZoneItem._id });
-  } else {
-    // Ngược lại thì chỉ update lại số lượng
-    await sourceZoneItem.save();
+    sourceZoneItem.quantity = 0;
+    sourceZoneItem.status = STATUS.INACTIVE;
   }
+  // luôn gọi save sau khi chỉnh quantity và status
+  await sourceZoneItem.save();
 
   // 9. Cộng vào destination zone (tạo nếu chưa có)
   let destinationZoneItem = await ZoneItem.findOne({
@@ -153,11 +154,16 @@ const transferBetweenZone = async (
 
   if (destinationZoneItem) {
     destinationZoneItem.quantity += quantity;
+    // nếu trước đó là INACTIVE mà giờ có hàng , chuyển lại active
+    if (destinationZoneItem.status === STATUS.INACTIVE && destinationZoneItem.quantity > 0) {
+      destinationZoneItem.status = STATUS.ACTIVE;
+    }
   } else {
     destinationZoneItem = new ZoneItem({
       zoneId: destinationZoneId,
       itemId,
       quantity,
+      status: STATUS.ACTIVE, // Mới tạo thì luôn là ACTIVE
     });
   }
 
@@ -229,7 +235,7 @@ const getProductsInMyWarehouse = async (userId) => {
       itemId: zoneItem.itemId._id,
       itemWeights: zoneItem.itemId.weights,
       itemManufactureDate: zoneItem.itemId.manufactureDate,
-      itemExpiryDate: zoneItem.itemId.expiryDate,
+      itemExpiryDate: zoneItem.itemId.expiredDate,
       zoneId: zoneItem.zoneId._id,
       zoneName: zoneItem.zoneId.name,
       zoneTemperature: zoneItem.zoneId.storageTemperature,
@@ -248,7 +254,7 @@ const getAllActiveProductsInZones = async () => {
     populate: {
       path: "productId",
       model: "Product",
-      match: { action: "ACTIVE" }, 
+      match: { action: "ACTIVE" },
     },
   });
 

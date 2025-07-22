@@ -13,6 +13,15 @@ router.post(
   validateSchema(createOutboundOrder),
   outboundOrderController.createOutboundOrder
 );
+router.get(
+  "/warehouse",
+  authenticationMiddleware.verifyToken,
+  authenticationMiddleware.allowRoles(
+    ROLES.WAREHOUSE_MANAGER,
+    ROLES.WAREHOUSE_STAFF
+  ),
+  outboundOrderController.getOutboundOrderByWarehouse
+);
 
 router.get(
   "/",

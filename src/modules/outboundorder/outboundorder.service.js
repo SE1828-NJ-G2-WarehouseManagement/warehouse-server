@@ -2,9 +2,10 @@ import OutboundOrder from "./outboundorder.model.js";
 import Customer from "../customer/customer.model.js";
 import User from "../user/user.model.js";
 import ZoneItem from "../zoneitem/zoneItem.model.js";
-
+import Zone from "../zone/zone.model.js";
+import { STATUS } from "../../constant/status.constant.js";
 const createOutboundOrder = async (data, userId) => {
-  const { customerId, signed, items, quantity } = data;
+  const { customerId, items, quantity } = data;
 
   // Kiểm tra customer
   const customer = await Customer.findById(customerId);
@@ -27,15 +28,45 @@ const createOutboundOrder = async (data, userId) => {
 
   // Trừ số lượng trong zoneitem
   for (const item of items) {
-    const zoneItem = await ZoneItem.findById(item.zoneItem);
+    const zoneItem = await ZoneItem.findById(item.zoneItem)
+      .populate({
+        path: "itemId",
+        populate: { path: "productId", model: "Product" },
+      })
+      .populate("zoneId");
+    const itemData = zoneItem.itemId;
+    const productData = itemData.productId;
+    const zone = zoneItem.zoneId;
+
+    const weights = itemData.weights || 0;
+    const density = productData.density || 1;
+    const quantitytoExport = item.quantity;
+    const Volume = (weights / density) * quantitytoExport;
+
+    zone.currentCapacity -= Volume;
+    await zone.save();
+    console.log(weights, density, quantitytoExport, Volume);
+
     zoneItem.quantity -= item.quantity;
-    await zoneItem.save();
+    // if (zoneItem.quantity <= 0) {
+    //   // Nếu số lượng về 0 hoặc nhỏ hơn, xóa khỏi zone
+    //   await ZoneItem.deleteOne({ _id: zoneItem._id });
+    // } else {
+    //   // Ngược lại thì chỉ update lại số lượng
+    //   await zoneItem.save();
+    // }
+    if (zoneItem.quantity <= 0) {
+      // XÓA MỀM
+      zoneItem.status = STATUS.INACTIVE;
+      await zoneItem.save();
+    } else {
+      await zoneItem.save();
+    }
   }
 
   // Tạo outbound order
   const outboundOrder = await OutboundOrder.create({
     customerId,
-    signed,
     items,
     quantity,
     createBy: userId,
@@ -71,8 +102,49 @@ const getOutboundOrderById = async (id) => {
     .populate("items.zoneItem");
 };
 
+// xem phiếu xuất theo warehouse
+const getOutboundOrderByWarehouse = async (user) => {
+  const userCurrent = await User.findOne({ email: user.email });
+  if (!userCurrent) {
+    throw new Error("User not found");
+  }
+
+  const zones = await Zone.find({ warehouseId: userCurrent.assignedWarehouse });
+
+  const outboundOrders = await OutboundOrder.find({
+    "items.zoneItem": { $ne: null }, 
+  })
+    .populate("customerId") 
+    .populate("createBy") 
+    .populate({
+      path: "items.zoneItem", 
+      populate: [
+        {
+          path: "itemId", 
+          populate: {
+            path: "productId", 
+            model: "Product", 
+            select: "name image density storageTemperature", 
+          },
+          select: "expiredDate weights", 
+        },
+        {
+          path: "zoneId", 
+          match: {
+            _id: { $in: zones.map((zone) => zone._id) },
+          },
+        },
+      ],
+    });
+
+  return outboundOrders;
+};
+
+
+
 export default {
   createOutboundOrder,
   getListOutboundOrder,
   getOutboundOrderById,
+  getOutboundOrderByWarehouse,
 };
