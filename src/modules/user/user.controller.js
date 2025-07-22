@@ -1,5 +1,5 @@
+import { email } from "zod/v4";
 import JwtUtils from "../../utils/auth.utils.js";
-import { changePasswordUser } from "./user.schema.js";
 import * as userService from "./user.service.js";
 
 const login = async (req, res) => {
@@ -207,7 +207,22 @@ const getUserById = async (req, res) => {
 
 const getAllUser = async (req, res) => {
   try {
-    const data = await userService.getAllUser();
+    const { status, email, role } = req.query;
+    const filter = {};
+
+    if (status) {
+      filter.status = status;
+    }
+
+    if (email) {
+      filter.email = { $regex: email, $options: 'i' };
+    }
+
+    if (role) {
+      filter.role = role
+    }
+
+    const data = await userService.getAllUser(filter);
     return res.status(200).json({
       message: "Get list successfully",
       isSuccess: true,
@@ -270,6 +285,23 @@ const deleteUserByEmail = async (req, res) => {
   }
 }
 
+const changeStatus = async (req, res) => {
+  try {
+    const { email, status } = req.body;
+    const user = await userService.changeStatus(email, status);
+    return res.status(200).json({
+      isSuccess: true,
+      message: 'Status updated successfully',
+      data: user,
+    });
+  } catch (error) {
+    return res.status(error.status || 500).json({
+      isSuccess: false,
+      message: error.message || 'Server error',
+    });
+  }
+}
+
 export {
   login,
   register,
@@ -283,5 +315,6 @@ export {
   getAllStaffAvailable,
   getUserById,
   deleteUserByEmail,
-  changePasswordSetting
+  changePasswordSetting,
+  changeStatus
 };

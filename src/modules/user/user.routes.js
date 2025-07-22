@@ -12,6 +12,7 @@ import {
   updateProfile,
   verifyOtp,
   viewProfile,
+  changeStatus,
 } from "./user.controller.js";
 import { validateSchema } from "../main.middleware.js";
 import {
@@ -108,6 +109,15 @@ userRouter.put(
   updateProfile
 );
 
+// @route   PUT /api/v1/users/update-status
+// @desc    update user status
+userRouter.put(
+  '/update-status',
+  authenticationMiddleware.verifyToken,
+  authenticationMiddleware.verifyRole(ROLES.ADMIN_WAREHOUSE),
+  changeStatus
+);
+
 // @route   DELETE /api/v1/users/delete-user-by-email
 // @desc    delete user by email
 userRouter.delete(
@@ -116,5 +126,7 @@ userRouter.delete(
   authenticationMiddleware.verifyRole(ROLES.ADMIN_WAREHOUSE),
   deleteUserByEmail
 );
+
+
 
 export default userRouter;

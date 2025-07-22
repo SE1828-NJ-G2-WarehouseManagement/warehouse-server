@@ -198,13 +198,16 @@ const updateProfile = async (
 
     // Check for existing phone
     const userFoundByPhone = await User.findOne({ phone });
-    if (userFoundByPhone) {
+
+    if (
+      userFoundByPhone &&
+      userFound._id.toString() !== userFoundByPhone._id.toString()
+    ) {
       const err = new Error("Phone has existed");
       err.status = 400;
       throw err;
     }
 
-    // If there's a new avatar and user has an existing avatar, delete the old one
     if (avatar && userFound.avatar !== null) {
       try {
         const oldAvatarUrl = userFound.avatar;
@@ -234,11 +237,15 @@ const updateProfile = async (
   }
 };
 
-const getAllUser = async () => {
+const getAllUser = async (filter = {}) => {
   try {
-    const listUser = await User.find({
+    // Build query
+    const query = {
       role: { $ne: ROLES.ADMIN_WAREHOUSE },
-    })
+      ...filter
+    };
+
+    const listUser = await User.find(query)
       .select("-password")
       .populate("assignedWarehouse", "name");
     return listUser;
@@ -310,6 +317,30 @@ const deleteUserByEmail = async (email) => {
   }
 };
 
+const changeStatus = async (email, status) => {
+  try {
+    if (!email || !status) {
+      const err = new Error('Email and status are required');
+      err.status = 400;
+      throw err;
+    }
+    const user = await User.findOneAndUpdate(
+      { email },
+      { status },
+      { new: true }
+    );
+    if (!user) {
+      const err = new Error('User not found');
+      err.status = 404;
+      throw err;
+    }
+    return user;
+  } catch (error) {
+    error.status = error.status || 500;
+    throw error;
+  }
+}
+
 export {
   login,
   register,
@@ -324,4 +355,5 @@ export {
   getUserById,
   deleteUserByEmail,
   changePasswordUser,
+  changeStatus
 };
