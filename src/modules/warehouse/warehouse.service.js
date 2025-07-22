@@ -68,15 +68,15 @@ const createWarehouse = async (data) => {
   return savedWarehouse;
 };
 
-const getWarehouses = async (page) => {
+const getWarehouses = async (page, filter = {}) => {
   const skip = (page - 1) * PAGE_SIZE;
   const [data, total] = await Promise.all([
-    Warehouse.find()
+    Warehouse.find(filter)
       .populate("manageBy")
       .populate("staffs")
       .skip(skip)
       .limit(PAGE_SIZE),
-    Warehouse.countDocuments({}),
+    Warehouse.countDocuments(filter),
   ]);
   return {
     data,

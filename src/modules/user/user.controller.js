@@ -1,5 +1,5 @@
+import { email } from "zod/v4";
 import JwtUtils from "../../utils/auth.utils.js";
-import { changePasswordUser } from "./user.schema.js";
 import * as userService from "./user.service.js";
 
 const login = async (req, res) => {
@@ -54,7 +54,7 @@ const register = async (req, res) => {
       return res.status(400).json({
         data: null,
         isSuccess: false,
-        message: "User has existed",
+        message: "Email has existed",
       });
     }
     return res.status(500).json({
@@ -161,14 +161,9 @@ const viewProfile = async (req, res) => {
 const updateProfile = async (req, res) => {
   try {
     const { email, username, phone, firstName, lastName } = req.body;
-    console.log(`======= update ======`);
-    console.log(req.body);
-
-    
 
     // Get avatar URL from uploaded file if exists  
-    const avatar = req.file ? req.file.path : undefined;
-    
+    const avatar = req.file ? req.file.path : null;
 
     const updatedUser = await userService.updateProfile(
       email,
@@ -185,9 +180,8 @@ const updateProfile = async (req, res) => {
       data: updatedUser,
     });
   } catch (error) {
-    console.log("err:", JSON.stringify(error, null, 2));
-    return res.status(500).json({
-      message: "Update profile failed",
+    return res.status(error.status || 500).json({
+      message: error.message || "Update profile failed",
       isSuccess: false,
     });
   }
@@ -213,7 +207,22 @@ const getUserById = async (req, res) => {
 
 const getAllUser = async (req, res) => {
   try {
-    const data = await userService.getAllUser();
+    const { status, email, role } = req.query;
+    const filter = {};
+
+    if (status) {
+      filter.status = status;
+    }
+
+    if (email) {
+      filter.email = { $regex: email, $options: 'i' };
+    }
+
+    if (role) {
+      filter.role = role
+    }
+
+    const data = await userService.getAllUser(filter);
     return res.status(200).json({
       message: "Get list successfully",
       isSuccess: true,
@@ -276,6 +285,23 @@ const deleteUserByEmail = async (req, res) => {
   }
 }
 
+const changeStatus = async (req, res) => {
+  try {
+    const { email, status } = req.body;
+    const user = await userService.changeStatus(email, status);
+    return res.status(200).json({
+      isSuccess: true,
+      message: 'Status updated successfully',
+      data: user,
+    });
+  } catch (error) {
+    return res.status(error.status || 500).json({
+      isSuccess: false,
+      message: error.message || 'Server error',
+    });
+  }
+}
+
 export {
   login,
   register,
@@ -289,5 +315,6 @@ export {
   getAllStaffAvailable,
   getUserById,
   deleteUserByEmail,
-  changePasswordSetting
+  changePasswordSetting,
+  changeStatus
 };

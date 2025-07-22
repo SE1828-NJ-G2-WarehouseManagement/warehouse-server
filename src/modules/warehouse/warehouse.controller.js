@@ -5,7 +5,17 @@ import User from "../user/user.model.js";
 export const getWarehouses = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
-    const result = await warehouseService.getWarehouses(page);
+    const { status, name } = req.query;
+    const filter = {};
+
+    if (status) {
+      filter.status = status;
+    }
+
+    if (name) {
+      filter.name = { $regex: name, $options: 'i' };
+    }
+    const result = await warehouseService.getWarehouses(page, filter);
     res.status(200).json(result);
   } catch (error) {
     res.status(500).json({ message: error.message });

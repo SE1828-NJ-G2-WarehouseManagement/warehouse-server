@@ -6,6 +6,8 @@ import OutboundOrder from '../../outboundorder/outboundorder.model.js';
 import Product from '../../product/product.model.js';
 import { STATUS } from '../../../constant/status.constant.js';
 import { ACTION } from '../../../constant/action.constant.js';
+import ZoneItem from '../../zoneitem/zoneitem.model.js';
+import Expired from '../../expired/expired.model.js';
 
 /**
  * get reports for dashboard
@@ -37,6 +39,20 @@ import { ACTION } from '../../../constant/action.constant.js';
  * @returns api response
  */
 const reports = async () => {
+  // Inventory count (total products in all warehouses)
+  const inventoryAgg = await ZoneItem.aggregate([
+    {
+      $group: {
+        _id: null,
+        totalQuantity: { $sum: "$quantity" }
+      }
+    }
+  ]);
+  const inventory = inventoryAgg.length > 0 ? inventoryAgg[0].totalQuantity : 0;
+
+  // Expired item count
+  const expiredCount = await Expired.countDocuments();
+
   // User status counts
   const [userActive, userInactive] = await Promise.all([
     User.countDocuments({ status: STATUS.ACTIVE }),
@@ -76,8 +92,6 @@ const reports = async () => {
     { $sort: { value: -1 } }
   ]);
 
-  console.log(productCategoryAgg);
-  
   const categoryAnalysis = productCategoryAgg.map(c => ({ type: c.type, value: c.value }));
 
   // Transaction analysis by month (for current year)
@@ -117,12 +131,14 @@ const reports = async () => {
     },
     warehouse: {
       'warehouse-active': warehouseActive,
-      'warehouse-inactive': warehouseInactive
+      'warehouse-inactive': warehouseInactive,
+      'products-warehouse': inventory,
+      'expired-item': expiredCount
     },
     analysis: {
       userAnalysis,
       categoryAnalysis,
-      transactionAnalysis
+      transactionAnalysis,
     }
   };
 };
