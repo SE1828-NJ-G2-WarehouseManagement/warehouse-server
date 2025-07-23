@@ -86,13 +86,41 @@ const createInternalTransfer = async (data, userId) => {
       warehouseId: data.receiver.warehouseId,
       zoneId: null,
     },
-    reason: data.reason,
     status: STATUS.PENDING,
     rejectedNote: null,
     createdBy: userId,
   });
 
-  return await internalTransfer.save();
+  const savedTransfer = await internalTransfer.save();
+
+  const sourceZone = await Zone.findById(firstZoneId);
+  const sourceWarehouse = await Warehouse.findById(sourceWarehouseId);
+  let totalVolume = 0;
+  for (const item of data.items) {
+    const zoneItem = await ZoneItem.findById(item.zoneItemId).populate({
+      path: "itemId",
+      populate: { path: "productId", select: "density" },
+    });
+    if (!zoneItem) continue;
+    zoneItem.quantity -= item.quantity;
+    if (zoneItem.quantity <= 0) {
+      await ZoneItem.deleteOne({ _id: zoneItem._id });
+    } else {
+      await zoneItem.save();
+    }
+    const weights = zoneItem.itemId.weights;
+    const density = zoneItem.itemId.productId.density;
+    totalVolume += (weights / density) * item.quantity;
+  }
+  sourceZone.currentCapacity -= totalVolume;
+  if (sourceZone.currentCapacity < 0) sourceZone.currentCapacity = 0;
+  await sourceZone.save();
+
+  sourceWarehouse.currentCapacity -= totalVolume;
+  if (sourceWarehouse.currentCapacity < 0) sourceWarehouse.currentCapacity = 0;
+  await sourceWarehouse.save();
+
+  return savedTransfer;
 };
 
 const getInternalTransfers = async (userId) => {
@@ -120,7 +148,7 @@ const getInternalTransfers = async (userId) => {
         path: "itemId",
         populate: {
           path: "productId",
-          select: "name density image",
+          select: "name density storageTemperature image",
         },
       },
     })
@@ -147,11 +175,11 @@ const getInternalTransferById = async (id) => {
           path: "itemId",
           populate: {
             path: "productId",
-            select: "name density image",
+            select: "name density storageTemperature image",
           },
         },
         {
-          path: "zoneId", 
+          path: "zoneId",
           select: "name storageTemperature",
         },
       ],
@@ -276,129 +304,91 @@ const approveInternalTransfer = async (id, userId, destinationZoneId) => {
     .populate("receiver.warehouseId")
     .populate({
       path: "items.zoneItemId",
-      populate: {
-        path: "itemId",
-        populate: {
-          path: "productId",
+      populate: [
+        {
+          path: "itemId",
+          populate: {
+            path: "productId",
+            select: "name density storageTemperature",
+          },
         },
-      },
+        {
+          path: "zoneId",
+        },
+      ],
     });
 
-  if (!transfer) {
-    throw new Error("Internal transfer not found");
-  }
-
-  if (transfer.status !== STATUS.PENDING) {
+  if (!transfer) throw new Error("Internal transfer not found");
+  if (transfer.status !== STATUS.PENDING)
     throw new Error(
       "Internal transfer can only be approved when status is PENDING"
     );
-  }
 
-  // 1. Kiểm tra destination zone có tồn tại và thuộc đúng warehouse không
+  // 1. Kiểm tra destination zone và warehouse
   const destinationZone = await Zone.findById(destinationZoneId);
-  if (!destinationZone) {
-    throw new Error("Destination zone not found");
-  }
-
+  if (!destinationZone) throw new Error("Destination zone not found");
   if (!destinationZone.warehouseId.equals(transfer.receiver.warehouseId._id)) {
     throw new Error("Destination zone must belong to the receiver warehouse");
   }
+  const destinationWarehouse = await Warehouse.findById(
+    destinationZone.warehouseId
+  );
 
-  // 2. Kiểm tra tất cả items có tồn tại và đủ quantity không
-  const sourceZoneItems = [];
-  for (const transferItem of transfer.items) {
-    const sourceZoneItem = await ZoneItem.findById(transferItem.zoneItemId);
-    if (!sourceZoneItem) {
-      throw new Error(`Source zone item ${transferItem.zoneItemId} not found`);
-    }
-    if (sourceZoneItem.quantity < transferItem.quantity) {
-      throw new Error(
-        `Not enough quantity for item ${transferItem.zoneItemId}. Available: ${sourceZoneItem.quantity}, Requested: ${transferItem.quantity}`
-      );
-    }
-    sourceZoneItems.push({
-      sourceZoneItem,
-      transferQuantity: transferItem.quantity,
-      item: transferItem.zoneItemId.itemId,
-      product: transferItem.zoneItemId.itemId.productId,
-    });
-  }
-
-  // 3. Kiểm tra nhiệt độ tất cả products có phù hợp với destination zone không
-  for (const { product } of sourceZoneItems) {
-    const isTempCompatible =
-      destinationZone.storageTemperature.min >=
-        product.storageTemperature.min &&
-      destinationZone.storageTemperature.max <= product.storageTemperature.max;
-
-    if (!isTempCompatible) {
-      throw new Error(
-        `Zone temperature not compatible with product ${product.name}`
-      );
-    }
-  }
-
-  // 4. Tính tổng volume cần chuyển
+  // 2. Tính tổng volume cần chuyển
   let totalVolumeToTransfer = 0;
-  for (const { item, product, transferQuantity } of sourceZoneItems) {
-    const itemVolume = item.weights / product.density;
-    totalVolumeToTransfer += itemVolume * transferQuantity;
+  for (const transferItem of transfer.items) {
+    const item = transferItem.zoneItemId.itemId;
+    const product = item.productId;
+    const weights = item.weights;
+    const density = product.density;
+    totalVolumeToTransfer += (weights / density) * transferItem.quantity;
   }
 
-  // 5. Kiểm tra sức chứa destination zone
-  const availableCapacity =
+  // 3. Kiểm tra sức chứa zone và warehouse đích
+  const availableZoneCapacity =
     destinationZone.totalCapacity - destinationZone.currentCapacity;
-  if (availableCapacity < totalVolumeToTransfer) {
+  const availableWarehouseCapacity =
+    destinationWarehouse.totalCapacity - destinationWarehouse.currentCapacity;
+  if (availableZoneCapacity < totalVolumeToTransfer) {
     throw new Error(
-      `Destination zone does not have enough capacity. Available: ${availableCapacity}, Required: ${totalVolumeToTransfer}`
+      `Destination zone does not have enough capacity. Available: ${availableZoneCapacity}, Required: ${totalVolumeToTransfer}`
+    );
+  }
+  if (availableWarehouseCapacity < totalVolumeToTransfer) {
+    throw new Error(
+      `Destination warehouse does not have enough capacity. Available: ${availableWarehouseCapacity}, Required: ${totalVolumeToTransfer}`
     );
   }
 
-  // 6. Thực hiện chuyển kho (trừ từ source, cộng vào destination)
-  const sourceZone = transfer.sourceZoneId;
-
-  for (const { sourceZoneItem, transferQuantity, item } of sourceZoneItems) {
-    // Trừ quantity từ source zone
-    sourceZoneItem.quantity -= transferQuantity;
-
-    if (sourceZoneItem.quantity <= 0) {
-      // Nếu quantity về 0, xóa khỏi source zone
-      await ZoneItem.deleteOne({ _id: sourceZoneItem._id });
-    } else {
-      // Ngược lại update quantity
-      await sourceZoneItem.save();
-    }
-
-    // Cộng vào destination zone (tạo mới nếu chưa có)
+  // 4. Cộng số lượng và thể tích vào kho đích
+  for (const transferItem of transfer.items) {
+    const item = transferItem.zoneItemId.itemId;
     let destinationZoneItem = await ZoneItem.findOne({
       zoneId: destinationZoneId,
       itemId: item._id,
     });
-
     if (destinationZoneItem) {
-      destinationZoneItem.quantity += transferQuantity;
+      destinationZoneItem.quantity += transferItem.quantity;
     } else {
       destinationZoneItem = new ZoneItem({
         zoneId: destinationZoneId,
         itemId: item._id,
-        quantity: transferQuantity,
+        quantity: transferItem.quantity,
       });
     }
-
     await destinationZoneItem.save();
   }
 
-  // 7. Cập nhật sức chứa của 2 zones
-  sourceZone.currentCapacity -= totalVolumeToTransfer;
+  // 5. Cập nhật sức chứa zone và warehouse đích
   destinationZone.currentCapacity += totalVolumeToTransfer;
-
-  await sourceZone.save();
+  destinationWarehouse.currentCapacity += totalVolumeToTransfer;
   await destinationZone.save();
+  await destinationWarehouse.save();
 
-  // 8. Cập nhật trạng thái transfer
+  // 6. Cập nhật trạng thái transfer
   transfer.status = STATUS.APPROVED;
   transfer.approvedBy = userId;
-  transfer.receiver.zoneId = destinationZoneId; // Lưu zone đích đã chọn
+  transfer.receiver.zoneId = destinationZoneId;
 
   return await transfer.save();
 };
@@ -408,16 +398,49 @@ const rejectInternalTransfer = async (id, userId, rejectedNote) => {
     throw new Error("Invalid internal transfer ID");
   }
 
-  const transfer = await InternalTransfer.findById(id);
-  if (!transfer) {
-    throw new Error("Internal transfer not found");
-  }
+  const transfer = await InternalTransfer.findById(id)
+    .populate({
+      path: "items.zoneItemId",
+      populate: [
+        {
+          path: "itemId",
+          populate: { path: "productId", select: "density" },
+        },
+        {
+          path: "zoneId",
+        },
+      ],
+    })
+    .populate("sourceZoneId")
+    .populate("sourceWarehouseId");
 
-  if (transfer.status !== STATUS.PENDING) {
+  if (!transfer) throw new Error("Internal transfer not found");
+  if (transfer.status !== STATUS.PENDING)
     throw new Error(
       "Internal transfer can only be rejected when status is PENDING"
     );
+
+  // Trả lại số lượng và thể tích cho kho nguồn
+  let totalVolume = 0;
+  for (const transferItem of transfer.items) {
+    const zoneItem = await ZoneItem.findById(transferItem.zoneItemId._id);
+    const item = transferItem.zoneItemId.itemId;
+    const product = item.productId;
+    const weights = item.weights;
+    const density = product.density;
+    if (zoneItem) {
+      zoneItem.quantity += transferItem.quantity;
+      await zoneItem.save();
+      totalVolume += (weights / density) * transferItem.quantity;
+    }
   }
+  const sourceZone = transfer.sourceZoneId;
+  const sourceWarehouse = await Warehouse.findById(transfer.sourceWarehouseId);
+
+  sourceZone.currentCapacity += totalVolume;
+  sourceWarehouse.currentCapacity += totalVolume;
+  await sourceZone.save();
+  await sourceWarehouse.save();
 
   transfer.status = STATUS.REJECTED;
   transfer.rejectedNote = rejectedNote;

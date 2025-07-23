@@ -214,8 +214,8 @@ const approveCategory = async (id, userId) => {
         category.action = category.pendingChanges.action;
     }
     category.status = STATUS.APPROVED;
-    category.pendingChanges = null;
-    category.requestType = null;
+    // category.pendingChanges = null;
+    // category.requestType = null;
     category.approveBy = userId;  
     await category.save();
     return category;
@@ -241,9 +241,9 @@ const rejectCategory = async (id, userId, note) => {
     category.requestType === "UPDATE" ||
     category.requestType === "STATUS_CHANGE"
   ) {
-    category.pendingChanges = null;
-    category.requestType = null;
-    category.status = STATUS.APPROVED;
+    // category.pendingChanges = null;
+    // category.requestType = null;
+    category.status = STATUS.REJECTED;
     category.rejectedNote = note;
     category.approveBy = userId;
     await category.save();
