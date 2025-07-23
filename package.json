@@ -28,6 +28,7 @@
     "morgan": "^1.10.0",
     "multer": "^2.0.1",
     "multer-storage-cloudinary": "^4.0.0",
+    "node-cron": "^4.2.1",
     "nodemailer": "^7.0.3",
     "redis": "^5.1.0",
     "zod": "^3.25.28"
