@@ -1,4 +1,3 @@
-import { no } from 'zod/v4/locales';
 import { STATUS } from '../../../../constant/status.constant.js';
 import Expired from '../../../../modules/expired/expired.model.js';
 import Item from '../../../../modules/item/item.model.js';
@@ -7,65 +6,64 @@ import Zone from '../../../../modules/zone/zone.model.js';
 import ZoneItem from '../../../../modules/zoneitem/zoneitem.model.js';
 
 async function handleExpiredItems() {
+  const start = Date.now();
+  console.log(`[CRON] Started expire job at ${new Date().toISOString()}`);
+
   try {
-    console.log('Running expire item job...');
-
     const now = new Date();
-    const vnDate = new Date(now.getTime() + 7 * 60 * 60 * 1000); // add 7 hours
+    const vnDate = new Date(now.getTime() + 7 * 60 * 60 * 1000); // UTC+7 (Vietnam time)
 
-    //Lấy các Item đã hết hạn
+    // Step 1: Find expired items
     const expiredItems = await Item.find({
       expiredDate: { $lte: vnDate },
       status: STATUS.ACTIVE,
     });
 
-    console.log(expiredItems);
-    
+    console.log(`[CRON] Found ${expiredItems.length} expired items.`);
 
     for (const item of expiredItems) {
-      //Tìm ZoneItem tương ứng với Item
-      const zoneItem = await ZoneItem.findOne({
+      const zoneItems = await ZoneItem.find({
         itemId: item._id,
         status: STATUS.ACTIVE,
       });
 
-      if (!zoneItem) continue;
+      if (!zoneItems.length) continue;
 
-      //Tìm Zone tương ứng
-      const zone = await Zone.findById(zoneItem.zoneId);
-      if (!zone) continue;
-
-      //Lấy thông tin Product để tính thể tích
       const product = await Product.findById(item.productId);
       if (!product || !product.density) continue;
 
-      const volumePerUnit = item.weights / product.density;
-      const totalVolumeToSubtract = volumePerUnit * zoneItem.quantity;
+      for (const zoneItem of zoneItems) {
+        const zone = await Zone.findById(zoneItem.zoneId);
+        if (!zone) continue;
 
-      //Cập nhật trạng thái và số lượng
+        const volumePerUnit = item.weights / product.density;
+        const totalVolumeToSubtract = volumePerUnit * zoneItem.quantity;
+
+        // Update zoneItem and zone
+        zoneItem.status = STATUS.INACTIVE;
+        zoneItem.quantity = 0;
+        zone.currentCapacity = Math.max(0, zone.currentCapacity - totalVolumeToSubtract);
+
+        await Promise.all([
+          zoneItem.save(),
+          zone.save(),
+          Expired.create({
+            zoneItemId: zoneItem._id,
+            note: `Expired at ${vnDate.toISOString()}`,
+          }),
+        ]);
+      }
+
+      // Mark the item as inactive
       item.status = STATUS.INACTIVE;
-      zoneItem.status = STATUS.INACTIVE;
-      zoneItem.quantity = 0;
-      zone.currentCapacity = Math.max(0, zone.currentCapacity - totalVolumeToSubtract);
-
-      //Lưu tất cả
-      await Promise.all([
-        item.save(),
-        zoneItem.save(),
-        zone.save(),
-        Expired.create({
-          zoneItemId: zoneItem._id,
-          note: `Expired at ${now.toISOString()}`,
-        }),
-      ]);
+      await item.save();
     }
 
-    console.log(`Processed ${expiredItems.length} expired items.`);
+    const duration = Date.now() - start;
+    console.log(`[CRON] Finished processing ${expiredItems.length} items in ${duration}ms`);
   } catch (err) {
-    console.error('Error in expire job:', err);
+    console.error('[CRON] Error in handleExpiredItems:', err);
   }
 }
 
-export {
-    handleExpiredItems
-}
+export { handleExpiredItems };
