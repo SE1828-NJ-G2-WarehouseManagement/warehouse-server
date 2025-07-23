@@ -3,9 +3,9 @@ const CRON_SCHEDULE = {
       desc: 'Every day at 00:00',
       value: '0 0 * * *',
     },
-    AFTER_30_SECOND: {
-        desc: 'Run each 30s',
-        value: '*/30 * * * * *'
+    AFTER_10_SECOND: {
+        desc: 'Run each 10s',
+        value: '*/10 * * * * *'
     }
 };
 

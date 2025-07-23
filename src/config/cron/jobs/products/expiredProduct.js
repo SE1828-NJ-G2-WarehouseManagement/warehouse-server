@@ -1,20 +1,26 @@
+import { no } from 'zod/v4/locales';
 import { STATUS } from '../../../../constant/status.constant.js';
 import Expired from '../../../../modules/expired/expired.model.js';
+import Item from '../../../../modules/item/item.model.js';
 import Product from '../../../../modules/product/product.model.js';
 import Zone from '../../../../modules/zone/zone.model.js';
 import ZoneItem from '../../../../modules/zoneitem/zoneitem.model.js';
 
 async function handleExpiredItems() {
   try {
-    console.log('⏰ Running expire item job...');
+    console.log('Running expire item job...');
 
     const now = new Date();
+    const vnDate = new Date(now.getTime() + 7 * 60 * 60 * 1000); // add 7 hours
 
     //Lấy các Item đã hết hạn
     const expiredItems = await Item.find({
-      expiredDate: { $lt: now },
+      expiredDate: { $lte: vnDate },
       status: STATUS.ACTIVE,
     });
+
+    console.log(expiredItems);
+    
 
     for (const item of expiredItems) {
       //Tìm ZoneItem tương ứng với Item

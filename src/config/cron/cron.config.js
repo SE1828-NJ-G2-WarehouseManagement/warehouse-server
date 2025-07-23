@@ -5,7 +5,7 @@ import { productJobs } from './jobs/warehouse.job.js';
 
 export function startDailyExpireCron() {
   // Chạy lúc 00:00 mỗi ngày
-  cron.schedule(CRON_SCHEDULE.EVERY_DAY_00_00.value, () => {
+  cron.schedule(CRON_SCHEDULE.AFTER_10_SECOND.value, () => {
     productJobs.handleExpiredItems();
   });
   console.log('🗓️ Cron job to expire items is scheduled (every day at midnight)');
