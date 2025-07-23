@@ -22,26 +22,12 @@ const createCategory = async (data, userId) => {
   return await category.save();
 };
 
-const getCategories = async (page = 1) => {
-  const skip = (page - 1) * PAGE_SIZE;
-  const [data, total] = await Promise.all([
-    Category.find()
-      .populate("createdBy", "firstName lastName phone _id")
-      .populate("updatedBy", "firstName lastName phone _id")
-      .sort({
-        status: 1
-      })
-      .skip(skip)
-      .limit(PAGE_SIZE),
-    Category.countDocuments({}),
-  ]);
-  return {
-    data,
-    total,
-    page,
-    pageSize: PAGE_SIZE,
-    totalPages: Math.ceil(total / PAGE_SIZE),
-  };
+const getCategories = async () => {
+  const data = await Category.find()
+    .populate("createdBy", "firstName lastName phone _id")
+    .populate("updatedBy", "firstName lastName phone _id")
+    .sort({ status: 1 });
+  return data;
 };
 
 const getListCategories = async (page = 1, name = '', status = '', type = '') => {
@@ -201,10 +187,28 @@ const approveCategory = async (id, userId) => {
   if (category.status !== STATUS.PENDING)
     throw new Error("Only pending categories can be approved");
 
-  if (
-    category.requestType === "UPDATE" ||
-    category.requestType === "STATUS_CHANGE"
-  ) {
+  // Lưu lại dữ liệu cũ để chuyển vào pendingChanges
+  const oldData = {
+    name: category.name,
+    status: category.status,
+    action: category.action,
+  };
+
+  // STATUS_CHANGE
+  if (category.requestType === "STATUS_CHANGE") {
+    if (category.pendingChanges && category.pendingChanges.action) {
+      // Cập nhật action mới, lưu action cũ vào pendingChanges
+      category.action = category.pendingChanges.action;
+      category.pendingChanges = { ...oldData };
+    }
+    category.status = STATUS.APPROVED;
+    category.approveBy = userId;
+    await category.save();
+    return category;
+  }
+
+  // UPDATE
+  if (category.requestType === "UPDATE") {
     if (category.pendingChanges) {
       if (category.pendingChanges.name)
         category.name = category.pendingChanges.name;
@@ -212,14 +216,16 @@ const approveCategory = async (id, userId) => {
         category.status = category.pendingChanges.status;
       if (category.pendingChanges.action)
         category.action = category.pendingChanges.action;
+      // Lưu dữ liệu cũ vào pendingChanges
+      category.pendingChanges = { ...oldData };
     }
     category.status = STATUS.APPROVED;
-    // category.pendingChanges = null;
-    // category.requestType = null;
-    category.approveBy = userId;  
+    category.approveBy = userId;
     await category.save();
     return category;
   }
+
+  // CREATE
   category.status = STATUS.APPROVED;
   category.action = ACTION.ACTIVE;
   category.approveBy = userId;
