@@ -4,8 +4,7 @@ import User from "../user/user.model.js";
 
 export const getCategories = async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1;
-    const result = await categoryService.getCategories(page);
+    const result = await categoryService.getCategories();
     res.status(200).json(result);
   } catch (error) {
     res.status(500).json({ message: error.message });
