@@ -13,6 +13,7 @@ import outboundOrderRouter from './outboundorder/outboundorder.routes.js';
 import adminRouter from './reports/admin-dashboard/admin.report.route.js';
 import internalTransfersRouter from './internalTransfers/internalTransfers.router.js';
 import reportRouter from './reports/manager_and_staff-dashboard/report.route.js';
+import itemRouter from './item/item.router.js'
 
 const mainRouter = express.Router();
 
@@ -31,7 +32,7 @@ mainRouter.use('/outbounds', outboundOrderRouter);
 mainRouter.use('/admin', adminRouter);
 mainRouter.use('/internal-transfers', internalTransfersRouter);
 mainRouter.use('/reports', reportRouter);
-
+mainRouter.use('/items', itemRouter);
 
 
 export default mainRouter;
