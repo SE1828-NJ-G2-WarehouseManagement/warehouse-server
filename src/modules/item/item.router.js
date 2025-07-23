@@ -10,5 +10,9 @@ router.get(
   authenticationMiddleware.verifyToken,
   itemController.getItemsByProductId
 );
-
+router.get(
+  "/my-warehouse",
+  authenticationMiddleware.verifyToken,
+  itemController.getItemsInMyWarehouse
+);
 export default router;
