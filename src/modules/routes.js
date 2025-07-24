@@ -14,6 +14,7 @@ import adminRouter from './reports/admin-dashboard/admin.report.route.js';
 import internalTransfersRouter from './internalTransfers/internalTransfers.router.js';
 import reportRouter from './reports/manager_and_staff-dashboard/report.route.js';
 import itemRouter from './item/item.router.js'
+import notificationRouter from './notification/notification.routes.js';
 
 const mainRouter = express.Router();
 
@@ -33,6 +34,8 @@ mainRouter.use('/admin', adminRouter);
 mainRouter.use('/internal-transfers', internalTransfersRouter);
 mainRouter.use('/reports', reportRouter);
 mainRouter.use('/items', itemRouter);
+mainRouter.use('/notifications', notificationRouter);
+
 
 
 export default mainRouter;
