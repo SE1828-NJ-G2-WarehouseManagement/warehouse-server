@@ -38,8 +38,30 @@ const getProductById = async (id) => {
     .populate("category", "name action _id")
     .populate("createdBy", "email role _id")
     .populate("updatedBy", "email role _id");
+
   if (!product) throw new Error("Product not found");
-  return product;
+
+  let pendingCategory = null;
+  if (product.pendingChanges && product.pendingChanges.category) {
+    // Populate tên category cho pendingChanges
+    const cat = await Category.findById(product.pendingChanges.category).select(
+      "name _id"
+    );
+    if (cat) {
+      pendingCategory = { _id: cat._id, name: cat.name };
+    }
+  }
+
+  // Trả về object đã bổ sung tên category cho pendingChanges
+  const result = product.toObject();
+  if (pendingCategory) {
+    result.pendingChanges = {
+      ...result.pendingChanges,
+      category: pendingCategory,
+    };
+  }
+
+  return result;
 };
 
 const updateProduct = async (id, data, userId) => {
@@ -149,19 +171,32 @@ const approveProduct = async (id, userId) => {
   if (product.status !== STATUS.PENDING)
     throw new Error("Only pending products can be approved");
 
+  // Lưu lại dữ liệu cũ để chuyển vào pendingChanges
+  const oldData = {
+    name: product.name,
+    category: product.category,
+    density: product.density,
+    storageTemperature: product.storageTemperature,
+    image: product.image,
+    reason: product.reason,
+    action: product.action,
+  };
+
+  // STATUS_CHANGE
   if (product.requestType === "STATUS_CHANGE") {
-    // Chỉ duyệt action
     if (product.pendingChanges && product.pendingChanges.action) {
+      // Cập nhật action mới, lưu action cũ vào pendingChanges
+      product.pendingChanges = { ...oldData };
       product.action = product.pendingChanges.action;
     }
     product.status = STATUS.APPROVED;
     product.action = ACTION.ACTIVE;
-    // product.pendingChanges = null;
     product.approveBy = userId;
     await product.save();
     return product;
   }
 
+  // UPDATE
   if (product.requestType === "UPDATE") {
     if (product.pendingChanges) {
       // Nếu có ảnh mới và đã có ảnh cũ thì xóa ảnh cũ trên Cloudinary
@@ -179,6 +214,7 @@ const approveProduct = async (id, userId) => {
           console.error("Error deleting old product image:", error);
         }
       }
+      // Cập nhật các trường từ pendingChanges sang trường chính
       if (product.pendingChanges.name)
         product.name = product.pendingChanges.name;
       if (product.pendingChanges.category)
@@ -189,13 +225,15 @@ const approveProduct = async (id, userId) => {
         product.storageTemperature = product.pendingChanges.storageTemperature;
       if (product.pendingChanges.image)
         product.image = product.pendingChanges.image;
-      // Nếu có pendingChanges.action thì cũng cập nhật luôn (trường hợp update kèm action)
+      if (product.pendingChanges.reason)
+        product.reason = product.pendingChanges.reason;
       if (product.pendingChanges.action)
         product.action = product.pendingChanges.action;
+      // Lưu dữ liệu cũ vào pendingChanges
+      product.pendingChanges = { ...oldData };
     }
     product.status = STATUS.APPROVED;
     product.action = ACTION.ACTIVE;
-    // product.pendingChanges = null;
     product.approveBy = userId;
     await product.save();
     return product;
