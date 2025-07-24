@@ -8,6 +8,7 @@ const isValidDDMMYYYY = (dateStr) => {
 const getReports = async (req, res) => {
     try {
         const {date} = req.query;
+        const user = req.user;
 
         // Validate date format if provided
         if (date && !isValidDDMMYYYY(date)) {
@@ -18,7 +19,8 @@ const getReports = async (req, res) => {
             });
         }
 
-        const data = await reportService.getReports(date);
+                
+        const data = await reportService.getReports(date, user.email);
 
         if (data) {
             return res.status(200).send({
