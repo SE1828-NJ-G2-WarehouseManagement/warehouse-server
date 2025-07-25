@@ -47,6 +47,7 @@ const createWarehouse = async (data) => {
 
   // Tạo warehouse
   const warehouse = new Warehouse(data);
+  warehouse.currentCapacity = 0;
   const savedWarehouse = await warehouse.save();
 
   // Cập nhật assignedWarehouse cho manager

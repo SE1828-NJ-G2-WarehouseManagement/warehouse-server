@@ -19,6 +19,9 @@ const notificationSchema = new Schema(
       ref: "User",
       required: true,
     },
+    readBy: [
+      { type: mongoose.Schema.Types.ObjectId, ref: "User", default: [] },
+    ],
 
     isRead: {
       type: Boolean,
@@ -29,6 +32,7 @@ const notificationSchema = new Schema(
 );
 
 const Notification =
-  mongoose.models.Notification || mongoose.model("Notification", notificationSchema);
+  mongoose.models.Notification ||
+  mongoose.model("Notification", notificationSchema);
 
 export default Notification;

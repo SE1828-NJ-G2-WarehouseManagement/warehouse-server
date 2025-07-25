@@ -11,7 +11,9 @@ export const getAllExpiringSoon = async (req, res) => {
 
 export const getExpiredProducts = async (req, res) => {
   try {
-    const result = await expireService.getExpiredProductsService();
+    const userEmail = req.user.email;
+
+    const result = await expireService.getExpiredProductsByUserEmail(userEmail);
     res.status(200).json({
       success: true,
       data: result,
