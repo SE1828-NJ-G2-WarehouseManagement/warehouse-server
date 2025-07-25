@@ -60,16 +60,32 @@ const getTotalStatsByDate = async (upToDate, userId) => {
 
     const dateFilter = { createdAt: { $lte: upToDate } };
 
-    const [zoneItems, imports, exports, expired, zones] = await Promise.all([
-      ZoneItem.countDocuments({ ...dateFilter, zoneId: { $in: zoneIds } }),
+    const [zoneItemsAgg, imports, exports, expired, zones] = await Promise.all([
+      ZoneItem.aggregate([
+        { $match: { ...dateFilter, zoneId: { $in: zoneIds } } },
+        {
+          $group: {
+            _id: null,
+            totalQuantity: { $sum: "$quantity" },
+          },
+        },
+      ]),
       InboundOrder.countDocuments({ ...dateFilter, zoneId: { $in: zoneIds } }),
-      OutboundOrder.countDocuments({ ...dateFilter, "items.zoneItem": { $in: zoneItemIds } }),
-      Expired.countDocuments({ ...dateFilter, zoneItemId: { $in: zoneItemIds } }),
+      OutboundOrder.countDocuments({
+        ...dateFilter,
+        "items.zoneItem": { $in: zoneItemIds },
+      }),
+      Expired.countDocuments({
+        ...dateFilter,
+        zoneItemId: { $in: zoneItemIds },
+      }),
       Zone.countDocuments({ ...dateFilter, _id: { $in: zoneIds } }),
     ]);
 
+    const totalZoneItems = zoneItemsAgg.length > 0 ? zoneItemsAgg[0].totalQuantity : 0;
+
     return {
-      products: zoneItems,
+      products: totalZoneItems,
       imports,
       exports,
       expired,
@@ -80,6 +96,7 @@ const getTotalStatsByDate = async (upToDate, userId) => {
     throw err;
   }
 };
+
 
 // Get each month in the year
 const getMonthlyStatsOfYear = async (year, userId) => {
