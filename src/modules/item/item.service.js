@@ -1,6 +1,6 @@
 import User from "../user/user.model.js";
 import Zone from "../zone/zone.model.js";
-import ZoneItem from "../zoneitem/zoneItem.model.js";
+import ZoneItem from "../zoneitem/zoneitem.model.js";
 import Item from "./item.model.js";
 
 const getItemsByProductId = async (productId) => {
@@ -20,10 +20,16 @@ const getItemsInMyWarehouse = async (userId) => {
   const zoneIds = zones.map((z) => z._id);
 
   // Lấy tất cả zoneItem trong các zone này, populate thêm zoneId và itemId.productId
-  const zoneItems = await ZoneItem.find({ zoneId: { $in: zoneIds } })
+  const zoneItems = await ZoneItem.find({
+    zoneId: { $in: zoneIds },
+    quantity: { $gt: 0 },
+  })
     .populate({
       path: "itemId",
-      populate: { path: "productId", select: "name storageTemperature density" },
+      populate: {
+        path: "productId",
+        select: "name storageTemperature density",
+      },
     })
     .populate({
       path: "zoneId",

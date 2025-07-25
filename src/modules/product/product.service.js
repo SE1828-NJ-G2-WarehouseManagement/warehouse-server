@@ -176,7 +176,12 @@ const approveProduct = async (id, userId) => {
     name: product.name,
     category: product.category,
     density: product.density,
-    storageTemperature: product.storageTemperature,
+    storageTemperature: product.storageTemperature
+      ? {
+          min: product.storageTemperature.min,
+          max: product.storageTemperature.max,
+        }
+      : null,
     image: product.image,
     reason: product.reason,
     action: product.action,
