@@ -1,4 +1,4 @@
-import ZoneItem from "./zoneItem.model.js";
+import ZoneItem from "./zoneitem.model.js";
 import Zone from "../zone/zone.model.js";
 import User from "../user/user.model.js";
 import PAGE_SIZE from "../../constant/pageSize.constant.js";

@@ -1,7 +1,7 @@
 import OutboundOrder from "./outboundorder.model.js";
 import Customer from "../customer/customer.model.js";
 import User from "../user/user.model.js";
-import ZoneItem from "../zoneitem/zoneItem.model.js";
+import ZoneItem from "../zoneitem/zoneitem.model.js";
 import Zone from "../zone/zone.model.js";
 import { STATUS } from "../../constant/status.constant.js";
 const createOutboundOrder = async (data, userId) => {

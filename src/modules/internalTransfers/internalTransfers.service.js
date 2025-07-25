@@ -1,5 +1,5 @@
 import InternalTransfer from "./internalTransfers.model.js";
-import ZoneItem from "../zoneitem/zoneItem.model.js";
+import ZoneItem from "../zoneitem/zoneitem.model.js";
 import Zone from "../zone/zone.model.js";
 import Warehouse from "../warehouse/warehouse.model.js";
 import User from "../user/user.model.js";
@@ -334,6 +334,28 @@ const approveInternalTransfer = async (id, userId, destinationZoneId) => {
     destinationZone.warehouseId
   );
 
+  const temperatureErrors = [];
+  for (const transferItem of transfer.items) {
+    const product = transferItem.zoneItemId.itemId.productId;
+    const productTempMin = product.storageTemperature.min;
+    const productTempMax = product.storageTemperature.max;
+    const zoneTempMin = destinationZone.storageTemperature.min;
+    const zoneTempMax = destinationZone.storageTemperature.max;
+
+    // Kiểm tra xem nhiệt độ zone có chứa được nhiệt độ yêu cầu của sản phẩm không
+    if (zoneTempMin > productTempMin || zoneTempMax < productTempMax) {
+      temperatureErrors.push(
+        `Product "${product.name}" requires temperature ${productTempMin}°C - ${productTempMax}°C, but destination zone "${destinationZone.name}" only supports ${zoneTempMin}°C - ${zoneTempMax}°C`
+      );
+    }
+  }
+
+  if (temperatureErrors.length > 0) {
+    throw new Error(
+      `Temperature incompatibility: ${temperatureErrors.join("; ")}`
+    );
+  }
+  
   // 2. Tính tổng volume cần chuyển
   let totalVolumeToTransfer = 0;
   for (const transferItem of transfer.items) {
