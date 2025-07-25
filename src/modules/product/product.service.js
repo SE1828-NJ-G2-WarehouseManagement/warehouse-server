@@ -183,7 +183,7 @@ const approveProduct = async (id, userId) => {
         }
       : null,
     image: product.image,
-    reason: product.reason,
+    // reason: product.reason,
     action: product.action,
   };
 
@@ -191,11 +191,12 @@ const approveProduct = async (id, userId) => {
   if (product.requestType === "STATUS_CHANGE") {
     if (product.pendingChanges && product.pendingChanges.action) {
       // Cập nhật action mới, lưu action cũ vào pendingChanges
-      product.pendingChanges = { ...oldData };
+      
       product.action = product.pendingChanges.action;
+      product.pendingChanges = { ...oldData };
     }
     product.status = STATUS.APPROVED;
-    product.action = ACTION.ACTIVE;
+    // product.action = ACTION.ACTIVE;
     product.approveBy = userId;
     await product.save();
     return product;
@@ -230,15 +231,13 @@ const approveProduct = async (id, userId) => {
         product.storageTemperature = product.pendingChanges.storageTemperature;
       if (product.pendingChanges.image)
         product.image = product.pendingChanges.image;
-      if (product.pendingChanges.reason)
-        product.reason = product.pendingChanges.reason;
       if (product.pendingChanges.action)
         product.action = product.pendingChanges.action;
       // Lưu dữ liệu cũ vào pendingChanges
       product.pendingChanges = { ...oldData };
     }
     product.status = STATUS.APPROVED;
-    product.action = ACTION.ACTIVE;
+    // product.action = ACTION.ACTIVE;
     product.approveBy = userId;
     await product.save();
     return product;
