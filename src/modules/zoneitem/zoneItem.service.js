@@ -215,7 +215,7 @@ const getProductsInMyWarehouse = async (userId) => {
       populate: {
         path: "productId",
         match: {
-          status: STATUS.APPROVED,
+          // status: STATUS.APPROVED,
           action: ACTION.ACTIVE,
         },
       },

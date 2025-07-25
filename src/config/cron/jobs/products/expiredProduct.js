@@ -1,9 +1,11 @@
-import { STATUS } from '../../../../constant/status.constant.js';
-import Expired from '../../../../modules/expired/expired.model.js';
-import Item from '../../../../modules/item/item.model.js';
-import Product from '../../../../modules/product/product.model.js';
-import Zone from '../../../../modules/zone/zone.model.js';
-import ZoneItem from '../../../../modules/zoneitem/zoneitem.model.js';
+import { STATUS } from "../../../../constant/status.constant.js";
+import Expired from "../../../../modules/expired/expired.model.js";
+import Item from "../../../../modules/item/item.model.js";
+import Notification from "../../../../modules/notification/notification.model.js";
+import Product from "../../../../modules/product/product.model.js";
+import Zone from "../../../../modules/zone/zone.model.js";
+import ZoneItem from "../../../../modules/zoneitem/zoneitem.model.js";
+import { sendNotificationToWarehouse } from "../../../socket/socket.js";
 
 async function handleExpiredItems() {
   const start = Date.now();
@@ -20,6 +22,7 @@ async function handleExpiredItems() {
     });
 
     console.log(`[CRON] Found ${expiredItems.length} expired items.`);
+    console.log(expiredItems);
 
     for (const item of expiredItems) {
       const zoneItems = await ZoneItem.find({
@@ -36,13 +39,25 @@ async function handleExpiredItems() {
         const zone = await Zone.findById(zoneItem.zoneId);
         if (!zone) continue;
 
+        const warehouseId = zone.warehouseId;
         const volumePerUnit = item.weights / product.density;
         const totalVolumeToSubtract = volumePerUnit * zoneItem.quantity;
 
         // Update zoneItem and zone
         zoneItem.status = STATUS.INACTIVE;
         zoneItem.quantity = 0;
-        zone.currentCapacity = Math.max(0, zone.currentCapacity - totalVolumeToSubtract);
+        zone.currentCapacity = Math.max(
+          0,
+          zone.currentCapacity - totalVolumeToSubtract
+        );
+
+        const notification = await Notification.create({
+          title: "Sản phẩm sắp hết hạn",
+          message: `Sản phẩm ${product.name} có ${item.weights}(kg), hết hạn lúc ${item.expiredDate}, ở zone: ${zone.name}`,
+          receiver: warehouseId,
+          isRead: false,
+          readBy: [],
+        });
 
         await Promise.all([
           zoneItem.save(),
@@ -52,6 +67,13 @@ async function handleExpiredItems() {
             note: `Expired at ${vnDate.toISOString()}`,
           }),
         ]);
+
+        sendNotificationToWarehouse(warehouseId, {
+          _id: notification._id,
+          title: notification.title,
+          message: notification.message,
+          createdAt: notification.createdAt,
+        });
       }
 
       // Mark the item as inactive
@@ -60,9 +82,11 @@ async function handleExpiredItems() {
     }
 
     const duration = Date.now() - start;
-    console.log(`[CRON] Finished processing ${expiredItems.length} items in ${duration}ms`);
+    console.log(
+      `[CRON] Finished processing ${expiredItems.length} items in ${duration}ms`
+    );
   } catch (err) {
-    console.error('[CRON] Error in handleExpiredItems:', err);
+    console.error("[CRON] Error in handleExpiredItems:", err);
   }
 }
 
