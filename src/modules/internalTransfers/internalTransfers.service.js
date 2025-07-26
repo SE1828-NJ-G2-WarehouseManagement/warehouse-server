@@ -343,7 +343,7 @@ const approveInternalTransfer = async (id, userId, destinationZoneId) => {
     const zoneTempMax = destinationZone.storageTemperature.max;
 
     // Kiểm tra xem nhiệt độ zone có chứa được nhiệt độ yêu cầu của sản phẩm không
-    if (zoneTempMin > productTempMin || zoneTempMax < productTempMax) {
+    if (zoneTempMin < productTempMin || zoneTempMax > productTempMax) {
       temperatureErrors.push(
         `Product "${product.name}" requires temperature ${productTempMin}°C - ${productTempMax}°C, but destination zone "${destinationZone.name}" only supports ${zoneTempMin}°C - ${zoneTempMax}°C`
       );
